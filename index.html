@@ -2,37 +2,50 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1"
+  >
+
   <meta name="theme-color" content="#212121">
 
   <title>Dhairya GPT</title>
 
+  <link rel="icon" type="image/svg+xml" href="/logo.svg">
+
+  <script>
+    document.documentElement.dataset.t =
+      localStorage.getItem("oac.theme") || "dark";
+  </script>
+
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     :root {
       --bg: #212121;
-      --panel: #171717;
-      --panel2: #2a2a2a;
-      --text: #ececec;
-      --muted: #a0a0a0;
-      --border: #3a3a3a;
-      --accent: #10a37f;
-      --user: #2f2f2f;
-      --danger: #ef4444;
+      --sidebar: #171717;
+      --panel: #2f2f2f;
+      --panel2: #303030;
+      --text: #ffffff;
+      --muted: #a9a9a9;
+      --border: #3f3f3f;
+      --accent: #ffffff;
+      --user: #303030;
     }
 
     html[data-t="light"] {
       --bg: #ffffff;
-      --panel: #f7f7f7;
+      --sidebar: #f7f7f7;
+      --panel: #f1f1f1;
       --panel2: #eeeeee;
-      --text: #202020;
+      --text: #171717;
       --muted: #666666;
       --border: #dddddd;
-      --accent: #0d8f70;
+      --accent: #171717;
       --user: #eeeeee;
-    }
-
-    * {
-      box-sizing: border-box;
     }
 
     body {
@@ -51,8 +64,7 @@
     }
 
     button,
-    textarea,
-    input {
+    textarea {
       font: inherit;
     }
 
@@ -60,45 +72,41 @@
       cursor: pointer;
     }
 
-    /* APP */
-
     .app {
-      height: 100vh;
       display: flex;
+      height: 100vh;
+      width: 100%;
     }
 
     /* SIDEBAR */
 
     .sidebar {
       width: 270px;
-      background: var(--panel);
+      background: var(--sidebar);
       border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
-      padding: 12px;
-      transition: transform .25s ease;
-      z-index: 20;
+      padding: 14px;
+      flex-shrink: 0;
     }
 
     .brand {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 8px 6px 16px;
-      font-weight: 700;
-      font-size: 17px;
+      padding: 6px 4px 16px;
     }
 
-    .logo {
-      width: 34px;
-      height: 34px;
-      border-radius: 10px;
-      background: var(--accent);
-      display: grid;
-      place-items: center;
-      color: white;
-      font-weight: 800;
-      font-size: 16px;
+    .app-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 11px;
+      display: block;
+    }
+
+    .brand-text {
+      font-weight: 700;
+      font-size: 17px;
     }
 
     .new-chat {
@@ -106,14 +114,14 @@
       border: 1px solid var(--border);
       background: transparent;
       color: var(--text);
-      padding: 11px 12px;
-      border-radius: 9px;
+      padding: 11px 14px;
+      border-radius: 10px;
       text-align: left;
       margin-bottom: 12px;
     }
 
     .new-chat:hover {
-      background: var(--panel2);
+      background: var(--panel);
     }
 
     .chat-list {
@@ -122,39 +130,71 @@
     }
 
     .chat-item {
-      padding: 10px 11px;
-      border-radius: 8px;
+      display: flex;
+      align-items: center;
       margin-bottom: 3px;
-      cursor: pointer;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      color: var(--text);
+      border-radius: 8px;
     }
 
-    .chat-item:hover,
     .chat-item.active {
-      background: var(--panel2);
+      background: var(--panel);
     }
 
-    .sidebar-bottom {
-      border-top: 1px solid var(--border);
-      padding-top: 10px;
-    }
-
-    .side-btn {
-      width: 100%;
+    .chat-open {
+      flex: 1;
       border: 0;
       background: transparent;
       color: var(--text);
       padding: 10px;
       text-align: left;
-      border-radius: 8px;
-      margin-bottom: 3px;
+      min-width: 0;
     }
 
-    .side-btn:hover {
-      background: var(--panel2);
+    .chat-title {
+      display: inline-block;
+      max-width: 170px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      vertical-align: middle;
+    }
+
+    .chat-icon {
+      margin-right: 8px;
+      font-size: 9px;
+      opacity: .6;
+    }
+
+    .chat-delete {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-size: 18px;
+      padding: 8px;
+    }
+
+    .chat-delete:hover {
+      color: var(--text);
+    }
+
+    .sidebar-bottom {
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+      margin-top: 10px;
+    }
+
+    .sidebar-button {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: var(--text);
+      text-align: left;
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    .sidebar-button:hover {
+      background: var(--panel);
     }
 
     /* MAIN */
@@ -169,41 +209,34 @@
 
     .topbar {
       height: 58px;
-      border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 0 16px;
-      background: var(--bg);
+      justify-content: space-between;
+      padding: 0 18px;
+      border-bottom: 1px solid var(--border);
       flex-shrink: 0;
     }
 
-    .menu-btn {
-      display: none;
-      border: 0;
-      background: transparent;
-      color: var(--text);
-      font-size: 22px;
-    }
-
-    .model-name {
+    .top-title {
       font-weight: 600;
     }
 
-    .status {
-      margin-left: auto;
-      font-size: 12px;
-      color: var(--muted);
+    .top-actions {
       display: flex;
-      align-items: center;
       gap: 6px;
     }
 
-    .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--accent);
+    .icon-button {
+      width: 38px;
+      height: 38px;
+      border: 0;
+      background: transparent;
+      color: var(--text);
+      border-radius: 8px;
+    }
+
+    .icon-button:hover {
+      background: var(--panel);
     }
 
     /* MESSAGES */
@@ -211,174 +244,172 @@
     .messages {
       flex: 1;
       overflow-y: auto;
-      scroll-behavior: smooth;
-      padding-bottom: 20px;
+      padding: 28px 18px 150px;
     }
 
-    .welcome {
-      max-width: 760px;
-      margin: 0 auto;
-      padding: 15vh 20px 30px;
-      text-align: center;
+    .message-row {
+      display: flex;
+      width: 100%;
+      max-width: 850px;
+      margin: 0 auto 22px;
     }
 
-    .welcome-logo {
-      width: 60px;
-      height: 60px;
-      margin: 0 auto 18px;
-      border-radius: 18px;
-      background: var(--accent);
-      color: white;
-      display: grid;
-      place-items: center;
-      font-weight: 800;
-      font-size: 25px;
+    .user-row {
+      justify-content: flex-end;
     }
 
-    .welcome h1 {
-      margin: 0 0 10px;
-      font-size: 30px;
-    }
-
-    .welcome p {
-      color: var(--muted);
-      margin: 0;
+    .assistant-row {
+      justify-content: flex-start;
     }
 
     .message {
-      width: 100%;
-      padding: 22px 20px;
-    }
-
-    .message.user {
-      background: var(--user);
-    }
-
-    .message-inner {
-      max-width: 850px;
-      margin: auto;
-      display: flex;
-      gap: 15px;
-    }
-
-    .avatar {
-      width: 30px;
-      height: 30px;
-      min-width: 30px;
-      border-radius: 8px;
-      display: grid;
-      place-items: center;
-      font-size: 12px;
-      font-weight: 700;
-      background: var(--panel2);
-    }
-
-    .assistant .avatar {
-      background: var(--accent);
-      color: white;
-    }
-
-    .message-content {
-      min-width: 0;
-      flex: 1;
+      max-width: 78%;
       line-height: 1.65;
-      overflow-wrap: anywhere;
+      font-size: 15px;
+      word-wrap: break-word;
     }
 
-    .message-content p {
-      margin: 0 0 12px;
+    .user-message {
+      background: var(--user);
+      padding: 11px 15px;
+      border-radius: 18px;
     }
 
-    .message-content p:last-child {
-      margin-bottom: 0;
+    .assistant-message {
+      max-width: 850px;
+      width: 100%;
     }
 
-    .message-content pre {
-      background: #111;
+    .message pre {
+      background: #111111;
       padding: 14px;
-      border-radius: 9px;
+      border-radius: 10px;
       overflow-x: auto;
-      margin: 12px 0;
     }
 
-    .message-content code {
-      font-family: Consolas, monospace;
-    }
-
-    .message-content :not(pre) > code {
-      background: var(--panel2);
+    .message code {
+      background: rgba(127,127,127,.18);
       padding: 2px 5px;
-      border-radius: 4px;
+      border-radius: 5px;
+    }
+
+    .message pre code {
+      background: transparent;
+      padding: 0;
+    }
+
+    .message h1,
+    .message h2,
+    .message h3 {
+      margin-top: 18px;
     }
 
     .message-actions {
       display: flex;
       gap: 5px;
       margin-top: 9px;
+      opacity: .7;
     }
 
-    .action-btn {
+    .message-actions button {
       border: 0;
       background: transparent;
       color: var(--muted);
-      padding: 5px 7px;
-      border-radius: 6px;
       font-size: 12px;
+      padding: 3px 5px;
     }
 
-    .action-btn:hover {
-      background: var(--panel2);
+    .message-actions button:hover {
       color: var(--text);
     }
 
-    /* INPUT */
+    /* WELCOME */
 
-    .composer-area {
-      padding: 12px 16px 18px;
-      background: var(--bg);
+    .welcome {
+      min-height: 55vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      color: var(--text);
+    }
+
+    .welcome-logo {
+      width: 62px;
+      height: 62px;
+      border-radius: 17px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .welcome-logo img {
+      width: 100%;
+      height: 100%;
+    }
+
+    .welcome h1 {
+      font-size: 28px;
+      margin: 0 0 8px;
+    }
+
+    .welcome p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    /* COMPOSER */
+
+    .composer-wrap {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 15px 18px 18px;
+      background: linear-gradient(
+        transparent,
+        var(--bg) 25%
+      );
     }
 
     .composer {
       max-width: 850px;
       margin: auto;
+      background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 15px;
+      border-radius: 18px;
       display: flex;
       align-items: flex-end;
-      padding: 8px;
-      background: var(--panel);
-      box-shadow: 0 3px 20px rgba(0,0,0,.08);
+      padding: 9px;
     }
 
-    textarea {
+    .composer textarea {
       flex: 1;
       resize: none;
       border: 0;
       outline: 0;
       background: transparent;
       color: var(--text);
+      padding: 9px 10px;
       min-height: 42px;
-      max-height: 180px;
-      padding: 10px 8px;
-      line-height: 1.4;
+      max-height: 150px;
     }
 
-    textarea::placeholder {
+    .composer textarea::placeholder {
       color: var(--muted);
     }
 
-    .send-btn {
-      width: 40px;
-      height: 40px;
+    .send-button {
       border: 0;
-      border-radius: 10px;
-      background: var(--text);
+      background: var(--accent);
       color: var(--bg);
-      font-weight: 700;
+      border-radius: 11px;
+      padding: 9px 14px;
+      font-weight: 600;
     }
 
-    .send-btn:disabled {
-      opacity: .4;
+    .send-button:disabled {
+      opacity: .5;
       cursor: not-allowed;
     }
 
@@ -390,141 +421,141 @@
       color: var(--muted);
     }
 
-    /* OVERLAY */
+    /* MODALS */
 
-    .overlay {
+    .modal {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,.5);
       display: none;
-      z-index: 15;
-    }
-
-    .overlay.show {
-      display: block;
-    }
-
-    /* MODAL */
-
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
+      align-items: center;
+      justify-content: center;
       background: rgba(0,0,0,.65);
-      display: none;
-      place-items: center;
-      z-index: 50;
+      z-index: 100;
       padding: 20px;
     }
 
-    .modal-backdrop.show {
-      display: grid;
+    .modal.show {
+      display: flex;
     }
 
-    .modal {
-      width: min(600px, 100%);
-      max-height: 80vh;
-      overflow-y: auto;
-      background: var(--panel);
+    .modal-box {
+      width: min(550px, 100%);
+      background: var(--bg);
       border: 1px solid var(--border);
-      border-radius: 15px;
+      border-radius: 16px;
       padding: 22px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.35);
     }
 
-    .modal h2 {
+    .modal-box h2 {
       margin-top: 0;
     }
 
-    .modal p {
-      color: var(--muted);
-      line-height: 1.6;
+    .modal-box textarea {
+      width: 100%;
+      min-height: 180px;
+      resize: vertical;
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      outline: none;
     }
 
-    .modal-close {
-      float: right;
-      border: 0;
-      background: transparent;
-      color: var(--muted);
-      font-size: 20px;
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 15px;
+    }
+
+    .modal-actions button {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      padding: 9px 14px;
+      border-radius: 9px;
     }
 
     /* MOBILE */
 
     @media (max-width: 700px) {
       .sidebar {
-        position: fixed;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        transform: translateX(-100%);
+        display: none;
       }
 
-      .sidebar.open {
-        transform: translateX(0);
-      }
-
-      .menu-btn {
-        display: block;
+      .messages {
+        padding-left: 12px;
+        padding-right: 12px;
       }
 
       .message {
-        padding: 18px 12px;
+        max-width: 90%;
       }
 
-      .message-inner {
-        gap: 10px;
+      .composer-wrap {
+        padding-left: 10px;
+        padding-right: 10px;
       }
 
-      .composer-area {
-        padding: 8px;
-      }
-
-      .welcome {
-        padding-top: 12vh;
+      .welcome h1 {
+        font-size: 24px;
       }
     }
-    .app-logo {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  display: block;
-}
   </style>
-  <img src="/logo.svg" alt="Dhairya GPT" class="app-logo">
-  <link rel="icon" type="image/svg+xml" href="/logo.svg">
 </head>
 
 <body>
 
 <div class="app">
 
-  <aside class="sidebar" id="sidebar">
+  <aside class="sidebar">
 
     <div class="brand">
-      <div class="logo">D</div>
-      <span>Dhairya GPT</span>
+      <img
+        src="/logo.svg"
+        alt="Dhairya GPT"
+        class="app-logo"
+      >
+
+      <div class="brand-text">
+        Dhairya GPT
+      </div>
     </div>
 
-    <button class="new-chat" id="newChatBtn">
+    <button
+      id="newChatBtn"
+      class="new-chat"
+    >
       + New chat
     </button>
 
-    <div class="chat-list" id="chatList"></div>
+    <div
+      id="chatList"
+      class="chat-list"
+    ></div>
 
     <div class="sidebar-bottom">
 
-      <button class="side-btn" id="themeBtn">
-        Change theme
-      </button>
-
-      <button class="side-btn" id="instructionsBtn">
+      <button
+        id="instructionsBtn"
+        class="sidebar-button"
+      >
         Custom instructions
       </button>
 
-      <button class="side-btn" id="termsBtn">
-        Terms
+      <button
+        id="themeBtn"
+        class="sidebar-button"
+      >
+        Toggle theme
       </button>
 
-      <button class="side-btn" id="clearBtn">
+      <button
+        id="clearChatsBtn"
+        class="sidebar-button"
+      >
         Clear chats
       </button>
 
@@ -532,65 +563,50 @@
 
   </aside>
 
-  <div class="overlay" id="overlay"></div>
-
   <main class="main">
 
     <header class="topbar">
 
-      <button class="menu-btn" id="menuBtn">
-        ☰
-      </button>
-
-      <div class="model-name">
+      <div class="top-title">
         Dhairya GPT
       </div>
 
-      <div class="status">
-        <span class="status-dot"></span>
-        <span id="statusText">Ready</span>
+      <div class="top-actions">
+        <button
+          id="themeTopBtn"
+          class="icon-button"
+          title="Toggle theme"
+          onclick="toggleTheme()"
+        >
+          ◐
+        </button>
       </div>
 
     </header>
 
-    <section class="messages" id="messages">
+    <div
+      id="messages"
+      class="messages"
+    ></div>
 
-      <div class="welcome" id="welcome">
+    <div class="composer-wrap">
 
-        <div class="welcome-logo">
-          D
-        </div>
-
-        <h1>How can I help?</h1>
-
-        <p>
-          Dhairya GPT — powered by Hugging Face.
-        </p>
-
-      </div>
-
-    </section>
-
-    <div class="composer-area">
-
-      <form class="composer" id="composer">
+      <div class="composer">
 
         <textarea
-          id="input"
+          id="messageInput"
           rows="1"
           placeholder="Message Dhairya GPT..."
-          autocomplete="off"
         ></textarea>
 
         <button
-          class="send-btn"
           id="sendBtn"
-          type="submit"
+          class="send-button"
         >
-          ↑
+          Send
         </button>
 
-      </form>
+      </div>
 
       <div class="footer-note">
         Dhairya GPT can make mistakes. Check important information.
@@ -602,46 +618,14 @@
 
 </div>
 
-<!-- TERMS -->
-
-<div class="modal-backdrop" id="termsModal">
-
-  <div class="modal">
-
-    <button class="modal-close" data-close="termsModal">
-      ×
-    </button>
-
-    <h2>Terms</h2>
-
-    <p>
-      Dhairya GPT is a personal AI interface. Responses are generated
-      by an external AI model and may contain errors.
-    </p>
-
-    <p>
-      Do not rely on Dhairya GPT as a replacement for professional
-      medical, legal, financial, or other expert advice.
-    </p>
-
-    <p>
-      By using the application, you understand that your messages
-      may be sent to the configured AI backend for processing.
-    </p>
-
-  </div>
-
-</div>
-
 <!-- CUSTOM INSTRUCTIONS -->
 
-<div class="modal-backdrop" id="instructionsModal">
+<div
+  id="instructionsModal"
+  class="modal"
+>
 
-  <div class="modal">
-
-    <button class="modal-close" data-close="instructionsModal">
-      ×
-    </button>
+  <div class="modal-box">
 
     <h2>Custom instructions</h2>
 
@@ -651,37 +635,30 @@
 
     <textarea
       id="instructionsInput"
-      style="
-        width:100%;
-        min-height:150px;
-        border:1px solid var(--border);
-        border-radius:10px;
-        background:var(--bg);
-        color:var(--text);
-        padding:12px;
-      "
-      placeholder="Example: Explain things simply..."
+      placeholder="Example: Keep answers concise and explain difficult topics simply."
     ></textarea>
 
-    <button
-      id="saveInstructions"
-      style="
-        margin-top:12px;
-        padding:10px 15px;
-        border:0;
-        border-radius:8px;
-        background:var(--accent);
-        color:white;
-      "
-    >
-      Save
-    </button>
+    <div class="modal-actions">
+
+      <button
+        data-close-modal
+      >
+        Cancel
+      </button>
+
+      <button
+        id="saveInstructionsBtn"
+      >
+        Save
+      </button>
+
+    </div>
 
   </div>
 
 </div>
 
-<script src="app.js"></script>
+<script src="/app.js"></script>
 
 </body>
 </html>
