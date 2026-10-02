@@ -1,27 +1,47 @@
 const CONFIG = {
-  WORKER_URL: "/api/chat",
+  API_URL: "/api/chat",
   MAX_MESSAGES: 20
 };
+
 const STORAGE_KEY = "dhairya_gpt_chats";
 const SETTINGS_KEY = "dhairya_gpt_settings";
 
-let chats = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-let settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
+let chats = JSON.parse(
+  localStorage.getItem(STORAGE_KEY) || "[]"
+);
+
+let settings = JSON.parse(
+  localStorage.getItem(SETTINGS_KEY) || "{}"
+);
 
 let currentChatId = null;
 let isGenerating = false;
 
-const $ = selector => document.querySelector(selector);
+const $ = selector =>
+  document.querySelector(selector);
+
+
+/* STORAGE */
 
 function saveChats() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(chats));
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(chats)
+  );
 }
 
 function saveSettings() {
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  localStorage.setItem(
+    SETTINGS_KEY,
+    JSON.stringify(settings)
+  );
 }
 
+
+/* CHAT MANAGEMENT */
+
 function createChat() {
+
   const chat = {
     id: Date.now().toString(),
     title: "New chat",
@@ -30,38 +50,59 @@ function createChat() {
   };
 
   chats.unshift(chat);
+
   currentChatId = chat.id;
 
   saveChats();
+
   renderAll();
 }
 
+
 function getCurrentChat() {
-  return chats.find(chat => chat.id === currentChatId);
+  return chats.find(
+    chat => chat.id === currentChatId
+  );
 }
 
+
 function deleteChat(id) {
-  chats = chats.filter(chat => chat.id !== id);
+
+  chats = chats.filter(
+    chat => chat.id !== id
+  );
 
   if (currentChatId === id) {
-    currentChatId = chats[0]?.id || null;
+    currentChatId =
+      chats[0]?.id || null;
   }
 
   saveChats();
+
   renderAll();
 }
 
+
 function clearChats() {
-  if (!confirm("Delete all chats?")) return;
+
+  if (!confirm("Delete all chats?")) {
+    return;
+  }
 
   chats = [];
+
   currentChatId = null;
 
   saveChats();
+
   createChat();
 }
 
+
+/* TEXT */
+
 function escapeHtml(text) {
+
   return String(text)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
@@ -70,7 +111,9 @@ function escapeHtml(text) {
     .replaceAll("'", "&#039;");
 }
 
+
 function renderMarkdown(text) {
+
   let html = escapeHtml(text);
 
   html = html.replace(
@@ -113,208 +156,349 @@ function renderMarkdown(text) {
     "<li>$1</li>"
   );
 
-  html = html.replace(/\n/g, "<br>");
+  html = html.replace(
+    /\n/g,
+    "<br>"
+  );
 
   return html;
 }
 
+
+/* CHAT LIST */
+
 function renderChatList() {
+
   const list = $("#chatList");
 
-  if (!list) return;
+  if (!list) {
+    return;
+  }
 
   list.innerHTML = "";
 
   chats.forEach(chat => {
-    const item = document.createElement("div");
+
+    const item =
+      document.createElement("div");
 
     item.className =
       "chat-item" +
-      (chat.id === currentChatId ? " active" : "");
+      (
+        chat.id === currentChatId
+          ? " active"
+          : ""
+      );
 
     item.innerHTML = `
+
       <button class="chat-open">
-        <span class="chat-icon">◼</span>
+
+        <span class="chat-icon">
+          ◼
+        </span>
+
         <span class="chat-title">
           ${escapeHtml(chat.title)}
         </span>
+
       </button>
 
-      <button class="chat-delete" title="Delete chat">
+      <button
+        class="chat-delete"
+        title="Delete chat"
+      >
         ×
       </button>
+
     `;
 
-    item.querySelector(".chat-open").onclick = () => {
-      currentChatId = chat.id;
-      renderAll();
-    };
+    item
+      .querySelector(".chat-open")
+      .onclick = () => {
 
-    item.querySelector(".chat-delete").onclick = event => {
-      event.stopPropagation();
-      deleteChat(chat.id);
-    };
+        currentChatId = chat.id;
+
+        renderAll();
+      };
+
+
+    item
+      .querySelector(".chat-delete")
+      .onclick = event => {
+
+        event.stopPropagation();
+
+        deleteChat(chat.id);
+      };
+
 
     list.appendChild(item);
   });
 }
 
-function renderMessages() {
-  const container = $("#messages");
 
-  if (!container) return;
+/* MESSAGES */
+
+function renderMessages() {
+
+  const container =
+    $("#messages");
+
+  if (!container) {
+    return;
+  }
 
   container.innerHTML = "";
 
-  const chat = getCurrentChat();
+  const chat =
+    getCurrentChat();
 
-  if (!chat || chat.messages.length === 0) {
+
+  if (
+    !chat ||
+    chat.messages.length === 0
+  ) {
+
     container.innerHTML = `
+
       <div class="welcome">
-        <div class="welcome-logo">D</div>
-        <h1>How can I help you?</h1>
-        <p>Ask anything and chat with Dhairya GPT.</p>
+
+        <div class="welcome-logo">
+          <img
+            src="/logo.svg"
+            alt="Dhairya GPT"
+          >
+        </div>
+
+        <h1>
+          How can I help you?
+        </h1>
+
+        <p>
+          Ask anything and chat with Dhairya GPT.
+        </p>
+
       </div>
+
     `;
 
     return;
   }
 
-  chat.messages.forEach((message, index) => {
-    const row = document.createElement("div");
 
-    row.className =
-      "message-row " +
-      (message.role === "user"
-        ? "user-row"
-        : "assistant-row");
+  chat.messages.forEach(
+    (message, index) => {
 
-    const bubble = document.createElement("div");
-
-    bubble.className =
-      "message " +
-      (message.role === "user"
-        ? "user-message"
-        : "assistant-message");
-
-    bubble.innerHTML =
-      renderMarkdown(message.content);
-
-    if (message.role === "assistant") {
-      const actions =
+      const row =
         document.createElement("div");
 
-      actions.className = "message-actions";
+      row.className =
+        "message-row " +
+        (
+          message.role === "user"
+            ? "user-row"
+            : "assistant-row"
+        );
 
-      actions.innerHTML = `
-        <button data-copy>Copy</button>
-        <button data-regenerate>Regenerate</button>
-      `;
 
-      actions.querySelector(
-        "[data-copy]"
-      ).onclick = () => {
-        navigator.clipboard.writeText(
+      const bubble =
+        document.createElement("div");
+
+      bubble.className =
+        "message " +
+        (
+          message.role === "user"
+            ? "user-message"
+            : "assistant-message"
+        );
+
+
+      bubble.innerHTML =
+        renderMarkdown(
           message.content
         );
-      };
 
-      actions.querySelector(
-        "[data-regenerate]"
-      ).onclick = () => {
-        regenerate(index);
-      };
 
-      bubble.appendChild(actions);
+      if (
+        message.role === "assistant"
+      ) {
+
+        const actions =
+          document.createElement("div");
+
+        actions.className =
+          "message-actions";
+
+
+        actions.innerHTML = `
+
+          <button data-copy>
+            Copy
+          </button>
+
+          <button data-regenerate>
+            Regenerate
+          </button>
+
+        `;
+
+
+        actions.querySelector(
+          "[data-copy]"
+        ).onclick = () => {
+
+          navigator.clipboard.writeText(
+            message.content
+          );
+
+        };
+
+
+        actions.querySelector(
+          "[data-regenerate]"
+        ).onclick = () => {
+
+          regenerate(index);
+
+        };
+
+
+        bubble.appendChild(actions);
+      }
+
+
+      row.appendChild(bubble);
+
+      container.appendChild(row);
     }
+  );
 
-    row.appendChild(bubble);
-    container.appendChild(row);
-  });
 
   container.scrollTop =
     container.scrollHeight;
 }
 
+
 function renderAll() {
+
   renderChatList();
+
   renderMessages();
 }
 
+
+/* GENERATION */
+
 function setGenerating(value) {
+
   isGenerating = value;
 
-  const button = $("#sendBtn");
+  const button =
+    $("#sendBtn");
 
-  if (!button) return;
+  if (!button) {
+    return;
+  }
 
   button.disabled = value;
+
   button.textContent =
     value ? "Stop" : "Send";
 }
 
+
 async function sendMessage() {
-  if (isGenerating) return;
 
-  const input = $("#messageInput");
+  if (isGenerating) {
+    return;
+  }
 
-  if (!input) return;
+  const input =
+    $("#messageInput");
+
+  if (!input) {
+    return;
+  }
 
   const content =
     input.value.trim();
 
-  if (!content) return;
+  if (!content) {
+    return;
+  }
+
 
   if (!currentChatId) {
     createChat();
   }
 
-  const chat = getCurrentChat();
 
-  if (!chat) return;
+  const chat =
+    getCurrentChat();
+
+  if (!chat) {
+    return;
+  }
+
 
   chat.messages.push({
     role: "user",
     content
   });
 
-  if (chat.title === "New chat") {
+
+  if (
+    chat.title === "New chat"
+  ) {
+
     chat.title =
       content.length > 40
         ? content.substring(0, 40) + "..."
         : content;
   }
 
+
   input.value = "";
 
   saveChats();
+
   renderAll();
 
   await generateResponse(chat);
 }
 
+
 async function generateResponse(chat) {
+
   setGenerating(true);
+
 
   chat.messages.push({
     role: "assistant",
     content: ""
   });
 
+
   const assistantMessage =
     chat.messages[
       chat.messages.length - 1
     ];
 
+
   renderMessages();
 
+
   try {
+
     let messages =
       chat.messages
         .slice(0, -1)
         .slice(-CONFIG.MAX_MESSAGES);
 
+
     if (settings.instructions) {
+
       messages = [
         {
           role: "system",
@@ -325,26 +509,34 @@ async function generateResponse(chat) {
       ];
     }
 
+
     const response =
-      await fetch(CONFIG.WORKER_URL, {
-        method: "POST",
+      await fetch(
+        CONFIG.API_URL,
+        {
+          method: "POST",
 
-        headers: {
-          "Content-Type":
-            "application/json"
-        },
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
 
-        body: JSON.stringify({
-          messages,
-          stream: true
-        })
-      });
+          body: JSON.stringify({
+            messages,
+            stream: true
+          })
+        }
+      );
+
 
     if (!response.ok) {
+
       let errorText =
         await response.text();
 
+
       try {
+
         const errorJson =
           JSON.parse(errorText);
 
@@ -352,18 +544,23 @@ async function generateResponse(chat) {
           errorJson.error ||
           errorJson.details ||
           errorText;
+
       } catch {}
+
 
       throw new Error(
         `Server error ${response.status}: ${errorText}`
       );
     }
 
+
     if (!response.body) {
+
       throw new Error(
         "No response stream received."
       );
     }
+
 
     const reader =
       response.body.getReader();
@@ -373,52 +570,78 @@ async function generateResponse(chat) {
 
     let buffer = "";
 
+
     while (true) {
+
       const {
         value,
         done
-      } = await reader.read();
+      } =
+        await reader.read();
 
-      if (done) break;
+
+      if (done) {
+        break;
+      }
+
 
       buffer += decoder.decode(
         value,
-        { stream: true }
+        {
+          stream: true
+        }
       );
+
 
       const lines =
         buffer.split("\n");
 
+
       buffer =
         lines.pop() || "";
 
+
       for (const line of lines) {
+
         const trimmed =
           line.trim();
 
-        if (!trimmed) continue;
 
-        if (!trimmed.startsWith("data:")) {
+        if (!trimmed) {
           continue;
         }
+
+
+        if (
+          !trimmed.startsWith("data:")
+        ) {
+          continue;
+        }
+
 
         const data =
           trimmed
             .substring(5)
             .trim();
 
+
         if (data === "[DONE]") {
           continue;
         }
 
+
         try {
+
           const json =
             JSON.parse(data);
+
 
           const delta =
             json?.choices?.[0]?.delta?.content;
 
+
           if (delta) {
+
             assistantMessage.content +=
               delta;
 
@@ -426,109 +649,162 @@ async function generateResponse(chat) {
           }
 
         } catch {
-          // Ignore incomplete SSE data
+          // Ignore malformed/incomplete SSE data
         }
       }
     }
 
+
     saveChats();
+
     renderMessages();
+
 
   } catch (error) {
 
     assistantMessage.content =
-      "Error: " + error.message;
+      "Error: " +
+      error.message;
 
     saveChats();
+
     renderMessages();
   }
+
 
   setGenerating(false);
 }
 
+
+/* REGENERATE */
+
 async function regenerate(index) {
-  if (isGenerating) return;
+
+  if (isGenerating) {
+    return;
+  }
 
   const chat =
     getCurrentChat();
 
-  if (!chat) return;
+  if (!chat) {
+    return;
+  }
+
 
   chat.messages.splice(index);
 
   saveChats();
+
   renderMessages();
 
   await generateResponse(chat);
 }
 
+
+/* THEME */
+
 function toggleTheme() {
+
   const html =
     document.documentElement;
+
 
   const current =
     localStorage.getItem(
       "oac.theme"
     ) || "dark";
 
+
   const next =
     current === "dark"
       ? "light"
       : "dark";
+
 
   localStorage.setItem(
     "oac.theme",
     next
   );
 
-  html.dataset.t = next;
+
+  html.dataset.t =
+    next;
 }
 
+
+/* CUSTOM INSTRUCTIONS */
+
 function openInstructions() {
+
   const modal =
     $("#instructionsModal");
 
-  if (!modal) return;
+  if (!modal) {
+    return;
+  }
+
 
   const textarea =
     $("#instructionsInput");
 
+
   if (textarea) {
+
     textarea.value =
       settings.instructions || "";
   }
 
+
   modal.classList.add("show");
 }
 
+
 function saveInstructionsData() {
+
   const textarea =
     $("#instructionsInput");
+
 
   settings.instructions =
     textarea?.value.trim() || "";
 
+
   saveSettings();
+
 
   const modal =
     $("#instructionsModal");
 
+
   if (modal) {
-    modal.classList.remove("show");
+
+    modal.classList.remove(
+      "show"
+    );
   }
 }
 
+
+/* COMPOSER */
+
 function setupComposer() {
+
   const input =
     $("#messageInput");
 
   const send =
     $("#sendBtn");
 
-  if (!input || !send) return;
+
+  if (!input || !send) {
+    return;
+  }
+
 
   send.onclick =
     sendMessage;
+
 
   input.addEventListener(
     "keydown",
@@ -538,13 +814,34 @@ function setupComposer() {
         event.key === "Enter" &&
         !event.shiftKey
       ) {
+
         event.preventDefault();
+
         sendMessage();
       }
 
     }
   );
+
+
+  input.addEventListener(
+    "input",
+    () => {
+
+      input.style.height =
+        "auto";
+
+      input.style.height =
+        Math.min(
+          input.scrollHeight,
+          150
+        ) + "px";
+    }
+  );
 }
+
+
+/* BUTTONS */
 
 function setupButtons() {
 
@@ -556,6 +853,7 @@ function setupButtons() {
       createChat;
   }
 
+
   const clear =
     $("#clearChatsBtn");
 
@@ -563,6 +861,7 @@ function setupButtons() {
     clear.onclick =
       clearChats;
   }
+
 
   const theme =
     $("#themeBtn");
@@ -572,6 +871,7 @@ function setupButtons() {
       toggleTheme;
   }
 
+
   const instructions =
     $("#instructionsBtn");
 
@@ -580,14 +880,19 @@ function setupButtons() {
       openInstructions;
   }
 
+
   const saveInstructions =
     $("#saveInstructionsBtn");
 
   if (saveInstructions) {
+
     saveInstructions.onclick =
       saveInstructionsData;
   }
 }
+
+
+/* MODALS */
 
 function setupModals() {
 
@@ -602,7 +907,9 @@ function setupModals() {
         const modal =
           button.closest(".modal");
 
+
         if (modal) {
+
           modal.classList.remove(
             "show"
           );
@@ -610,6 +917,7 @@ function setupModals() {
       };
 
     });
+
 
   document
     .querySelectorAll(".modal")
@@ -622,6 +930,7 @@ function setupModals() {
           if (
             event.target === modal
           ) {
+
             modal.classList.remove(
               "show"
             );
@@ -633,6 +942,9 @@ function setupModals() {
     });
 }
 
+
+/* INITIALIZATION */
+
 function init() {
 
   const theme =
@@ -640,22 +952,31 @@ function init() {
       "oac.theme"
     ) || "dark";
 
+
   document.documentElement.dataset.t =
     theme;
 
+
   if (!chats.length) {
+
     createChat();
+
   } else {
+
     currentChatId =
       chats[0].id;
 
     renderAll();
   }
 
+
   setupComposer();
+
   setupButtons();
+
   setupModals();
 }
+
 
 document.addEventListener(
   "DOMContentLoaded",
