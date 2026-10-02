@@ -1,120 +1,141 @@
 # Dhairya GPT
 
-Dhairya GPT is a personal AI chat application with a clean, ChatGPT-style interface.
+A modern ChatGPT-style AI web application powered by **Hugging Face** and **Qwen 2.5 7B Instruct**.
+
+Dhairya GPT provides a clean conversational interface with streaming AI responses, persistent chat history, custom instructions, and dark/light themes.
 
 ## Features
 
-- AI chat
-- Streaming responses
-- Multiple conversations
-- Local chat history
-- Dark and light mode
-- Custom instructions
-- Copy responses
-- Regenerate responses
-- Responsive design
-- Hugging Face AI models
-- Cloudflare Worker API backend
+* AI chat with Qwen 2.5 7B Instruct
+* Streaming responses
+* Persistent chat history using LocalStorage
+* Create and delete chats
+* Regenerate AI responses
+* Copy responses
+* Custom instructions
+* Dark and light themes
+* Responsive interface
+* Secure Hugging Face API token handling
+* Vercel serverless API
+* No API key exposed in frontend code
 
 ## Tech Stack
 
-- HTML
-- CSS
-- JavaScript
-- Vercel
-- Cloudflare Workers
-- Hugging Face
-- Qwen 2.5 7B Instruct
+* HTML
+* CSS
+* JavaScript
+* Vercel Serverless Functions
+* Hugging Face Router API
+* Qwen 2.5 7B Instruct
 
-## Architecture
+## Project Structure
+
+```text
+dhairya-gpt/
+├── index.html
+├── app.js
+├── logo.svg
+├── README.md
+├── .gitignore
+└── api/
+    └── chat.js
+```
+
+## How It Works
 
 ```text
 User
-  │
-  ▼
-Vercel
-  │
-  │
-  ▼
-Dhairya GPT Frontend
-  │
-  ▼
-Cloudflare Worker
-  │
-  │ Secure HF_TOKEN
-  ▼
-Hugging Face
-  │
-  ▼
+  ↓
+Dhairya GPT Web Interface
+  ↓
+/api/chat
+  ↓
+Vercel Serverless Function
+  ↓
+Hugging Face Router
+  ↓
 Qwen 2.5 7B Instruct
-Project Structure
-dhairya-gpt/
-│
-├── index.html
-├── app.js
-└── README.md
-Setup
-1. Frontend
+  ↓
+Streaming response
+  ↓
+Dhairya GPT
+```
 
-Upload the following files to Vercel:
+## Setup
 
-index.html
-app.js
-README.md
-2. Cloudflare Worker
+### 1. Deploy to Vercel
 
-The Cloudflare Worker acts as a secure API proxy between Dhairya GPT and Hugging Face.
+Import the repository into Vercel and deploy it as a standard Vercel project.
 
-The Hugging Face API token is stored as a Cloudflare Worker Secret.
+No build command is required for the basic project.
 
-3. Hugging Face Token
+### 2. Add Hugging Face Token
 
-The Hugging Face token should be stored in Cloudflare as:
+In your Vercel project, open:
 
-HF_TOKEN
+**Settings → Environment Variables**
 
-Never place the token inside:
+Add:
 
-index.html
-app.js
-README.md
-4. Configure the Worker URL
+```text
+Name: HF_TOKEN
+Value: your_hugging_face_token
+```
 
-In app.js, configure:
+Redeploy the project after adding the variable.
 
-const CONFIG = {
-  WORKER_URL: "https://YOUR-WORKER.workers.dev",
-  MODEL: "Qwen/Qwen2.5-7B-Instruct",
-  MAX_MESSAGES: 20
-};
+### 3. Run Locally
 
-Replace the Worker URL with your actual Cloudflare Worker URL.
+You can run the project with Vercel's local development environment:
 
-Deployment
+```bash
+npm install -g vercel
+vercel dev
+```
 
-The frontend is hosted on Vercel.
+Then open the local URL shown by Vercel.
 
-The API proxy is hosted on Cloudflare Workers.
+## Security
 
-Hugging Face provides the AI inference.
+The Hugging Face token is stored as a server-side environment variable.
 
-Security
+**Never put the token inside:**
 
-The Hugging Face API token is never included in the frontend code.
+* `index.html`
+* `app.js`
+* GitHub source code
+* `README.md`
+* public JavaScript files
 
-It is stored as a Cloudflare Worker Secret.
+The frontend communicates with `/api/chat`, while the serverless function communicates with Hugging Face.
 
-Do not commit API keys, tokens, passwords, or other private credentials to the repository.
+## Model
 
-Disclaimer
+Dhairya GPT currently uses:
 
-Dhairya GPT is a personal AI project.
+```text
+Qwen/Qwen2.5-7B-Instruct
+```
 
-AI-generated responses can contain mistakes. Important information should be independently verified.
+The model is accessed through the Hugging Face Router API.
 
-Author
+## Customization
 
-Built by Dhairya.
+You can customize:
 
+* App name
+* Logo
+* UI design
+* Theme
+* System instructions
+* AI model
+* Maximum conversation context
+* Response generation settings
 
-That's all you need for the README. **No API key or Hugging Face token goes inside it.**
+## License
+
+This project is intended for personal and educational use. Check the licenses and terms of the third-party services and models used by the project before redistributing it.
+
+---
+
+**Dhairya GPT — Your personal AI workspace.**
