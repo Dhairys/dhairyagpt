@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+  <meta name="theme-color" content="#212121">
+
+  <title>Dhairya GPT</title>
+
+  <style>
+    :root {
+      --bg: #212121;
+      --panel: #171717;
+      --panel2: #2a2a2a;
+      --text: #ececec;
+      --muted: #a0a0a0;
+      --border: #3a3a3a;
+      --accent: #10a37f;
+      --user: #2f2f2f;
+      --danger: #ef4444;
+    }
+
+    html[data-t="light"] {
+      --bg: #ffffff;
+      --panel: #f7f7f7;
+      --panel2: #eeeeee;
+      --text: #202020;
+      --muted: #666666;
+      --border: #dddddd;
+      --accent: #0d8f70;
+      --user: #eeeeee;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    button,
+    textarea,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    /* APP */
+
+    .app {
+      height: 100vh;
+      display: flex;
+    }
+
+    /* SIDEBAR */
+
+    .sidebar {
+      width: 270px;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      transition: transform .25s ease;
+      z-index: 20;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 6px 16px;
+      font-weight: 700;
+      font-size: 17px;
+    }
+
+    .logo {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: var(--accent);
+      display: grid;
+      place-items: center;
+      color: white;
+      font-weight: 800;
+      font-size: 16px;
+    }
+
+    .new-chat {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      padding: 11px 12px;
+      border-radius: 9px;
+      text-align: left;
+      margin-bottom: 12px;
+    }
+
+    .new-chat:hover {
+      background: var(--panel2);
+    }
+
+    .chat-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .chat-item {
+      padding: 10px 11px;
+      border-radius: 8px;
+      margin-bottom: 3px;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text);
+    }
+
+    .chat-item:hover,
+    .chat-item.active {
+      background: var(--panel2);
+    }
+
+    .sidebar-bottom {
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+    }
+
+    .side-btn {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: var(--text);
+      padding: 10px;
+      text-align: left;
+      border-radius: 8px;
+      margin-bottom: 3px;
+    }
+
+    .side-btn:hover {
+      background: var(--panel2);
+    }
+
+    /* MAIN */
+
+    .main {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .topbar {
+      height: 58px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 16px;
+      background: var(--bg);
+      flex-shrink: 0;
+    }
+
+    .menu-btn {
+      display: none;
+      border: 0;
+      background: transparent;
+      color: var(--text);
+      font-size: 22px;
+    }
+
+    .model-name {
+      font-weight: 600;
+    }
+
+    .status {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    /* MESSAGES */
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+      padding-bottom: 20px;
+    }
+
+    .welcome {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 15vh 20px 30px;
+      text-align: center;
+    }
+
+    .welcome-logo {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 18px;
+      border-radius: 18px;
+      background: var(--accent);
+      color: white;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 25px;
+    }
+
+    .welcome h1 {
+      margin: 0 0 10px;
+      font-size: 30px;
+    }
+
+    .welcome p {
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .message {
+      width: 100%;
+      padding: 22px 20px;
+    }
+
+    .message.user {
+      background: var(--user);
+    }
+
+    .message-inner {
+      max-width: 850px;
+      margin: auto;
+      display: flex;
+      gap: 15px;
+    }
+
+    .avatar {
+      width: 30px;
+      height: 30px;
+      min-width: 30px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--panel2);
+    }
+
+    .assistant .avatar {
+      background: var(--accent);
+      color: white;
+    }
+
+    .message-content {
+      min-width: 0;
+      flex: 1;
+      line-height: 1.65;
+      overflow-wrap: anywhere;
+    }
+
+    .message-content p {
+      margin: 0 0 12px;
+    }
+
+    .message-content p:last-child {
+      margin-bottom: 0;
+    }
+
+    .message-content pre {
+      background: #111;
+      padding: 14px;
+      border-radius: 9px;
+      overflow-x: auto;
+      margin: 12px 0;
+    }
+
+    .message-content code {
+      font-family: Consolas, monospace;
+    }
+
+    .message-content :not(pre) > code {
+      background: var(--panel2);
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+
+    .message-actions {
+      display: flex;
+      gap: 5px;
+      margin-top: 9px;
+    }
+
+    .action-btn {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 5px 7px;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+
+    .action-btn:hover {
+      background: var(--panel2);
+      color: var(--text);
+    }
+
+    /* INPUT */
+
+    .composer-area {
+      padding: 12px 16px 18px;
+      background: var(--bg);
+    }
+
+    .composer {
+      max-width: 850px;
+      margin: auto;
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      display: flex;
+      align-items: flex-end;
+      padding: 8px;
+      background: var(--panel);
+      box-shadow: 0 3px 20px rgba(0,0,0,.08);
+    }
+
+    textarea {
+      flex: 1;
+      resize: none;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--text);
+      min-height: 42px;
+      max-height: 180px;
+      padding: 10px 8px;
+      line-height: 1.4;
+    }
+
+    textarea::placeholder {
+      color: var(--muted);
+    }
+
+    .send-btn {
+      width: 40px;
+      height: 40px;
+      border: 0;
+      border-radius: 10px;
+      background: var(--text);
+      color: var(--bg);
+      font-weight: 700;
+    }
+
+    .send-btn:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+    }
+
+    .footer-note {
+      max-width: 850px;
+      margin: 7px auto 0;
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* OVERLAY */
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.5);
+      display: none;
+      z-index: 15;
+    }
+
+    .overlay.show {
+      display: block;
+    }
+
+    /* MODAL */
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.65);
+      display: none;
+      place-items: center;
+      z-index: 50;
+      padding: 20px;
+    }
+
+    .modal-backdrop.show {
+      display: grid;
+    }
+
+    .modal {
+      width: min(600px, 100%);
+      max-height: 80vh;
+      overflow-y: auto;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      padding: 22px;
+    }
+
+    .modal h2 {
+      margin-top: 0;
+    }
+
+    .modal p {
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .modal-close {
+      float: right;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-size: 20px;
+    }
+
+    /* MOBILE */
+
+    @media (max-width: 700px) {
+      .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        transform: translateX(-100%);
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .menu-btn {
+        display: block;
+      }
+
+      .message {
+        padding: 18px 12px;
+      }
+
+      .message-inner {
+        gap: 10px;
+      }
+
+      .composer-area {
+        padding: 8px;
+      }
+
+      .welcome {
+        padding-top: 12vh;
+      }
+    }
+    .app-logo {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: block;
+}
+  </style>
+  <img src="/logo.svg" alt="Dhairya GPT" class="app-logo">
+  <link rel="icon" type="image/svg+xml" href="/logo.svg">
+</head>
+
+<body>
+
+<div class="app">
+
+  <aside class="sidebar" id="sidebar">
+
+    <div class="brand">
+      <div class="logo">D</div>
+      <span>Dhairya GPT</span>
+    </div>
+
+    <button class="new-chat" id="newChatBtn">
+      + New chat
+    </button>
+
+    <div class="chat-list" id="chatList"></div>
+
+    <div class="sidebar-bottom">
+
+      <button class="side-btn" id="themeBtn">
+        Change theme
+      </button>
+
+      <button class="side-btn" id="instructionsBtn">
+        Custom instructions
+      </button>
+
+      <button class="side-btn" id="termsBtn">
+        Terms
+      </button>
+
+      <button class="side-btn" id="clearBtn">
+        Clear chats
+      </button>
+
+    </div>
+
+  </aside>
+
+  <div class="overlay" id="overlay"></div>
+
+  <main class="main">
+
+    <header class="topbar">
+
+      <button class="menu-btn" id="menuBtn">
+        ☰
+      </button>
+
+      <div class="model-name">
+        Dhairya GPT
+      </div>
+
+      <div class="status">
+        <span class="status-dot"></span>
+        <span id="statusText">Ready</span>
+      </div>
+
+    </header>
+
+    <section class="messages" id="messages">
+
+      <div class="welcome" id="welcome">
+
+        <div class="welcome-logo">
+          D
+        </div>
+
+        <h1>How can I help?</h1>
+
+        <p>
+          Dhairya GPT — powered by Hugging Face.
+        </p>
+
+      </div>
+
+    </section>
+
+    <div class="composer-area">
+
+      <form class="composer" id="composer">
+
+        <textarea
+          id="input"
+          rows="1"
+          placeholder="Message Dhairya GPT..."
+          autocomplete="off"
+        ></textarea>
+
+        <button
+          class="send-btn"
+          id="sendBtn"
+          type="submit"
+        >
+          ↑
+        </button>
+
+      </form>
+
+      <div class="footer-note">
+        Dhairya GPT can make mistakes. Check important information.
+      </div>
+
+    </div>
+
+  </main>
+
+</div>
+
+<!-- TERMS -->
+
+<div class="modal-backdrop" id="termsModal">
+
+  <div class="modal">
+
+    <button class="modal-close" data-close="termsModal">
+      ×
+    </button>
+
+    <h2>Terms</h2>
+
+    <p>
+      Dhairya GPT is a personal AI interface. Responses are generated
+      by an external AI model and may contain errors.
+    </p>
+
+    <p>
+      Do not rely on Dhairya GPT as a replacement for professional
+      medical, legal, financial, or other expert advice.
+    </p>
+
+    <p>
+      By using the application, you understand that your messages
+      may be sent to the configured AI backend for processing.
+    </p>
+
+  </div>
+
+</div>
+
+<!-- CUSTOM INSTRUCTIONS -->
+
+<div class="modal-backdrop" id="instructionsModal">
+
+  <div class="modal">
+
+    <button class="modal-close" data-close="instructionsModal">
+      ×
+    </button>
+
+    <h2>Custom instructions</h2>
+
+    <p>
+      Tell Dhairya GPT how you want it to respond.
+    </p>
+
+    <textarea
+      id="instructionsInput"
+      style="
+        width:100%;
+        min-height:150px;
+        border:1px solid var(--border);
+        border-radius:10px;
+        background:var(--bg);
+        color:var(--text);
+        padding:12px;
+      "
+      placeholder="Example: Explain things simply..."
+    ></textarea>
+
+    <button
+      id="saveInstructions"
+      style="
+        margin-top:12px;
+        padding:10px 15px;
+        border:0;
+        border-radius:8px;
+        background:var(--accent);
+        color:white;
+      "
+    >
+      Save
+    </button>
+
+  </div>
+
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>
