@@ -16,6 +16,10 @@ let settings = JSON.parse(
 
 let currentChatId = null;
 let isGenerating = false;
+let abortController = null;
+
+const ICON_SEND = '<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+const ICON_STOP = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="6" width="12" height="12" rx="2.5"/></svg>';
 
 const $ = selector =>
   document.querySelector(selector);
@@ -156,10 +160,17 @@ function renderMarkdown(text) {
     "<li>$1</li>"
   );
 
+  html = html.replace(/\n/g, "<br>");
+
   html = html.replace(
-    /\n/g,
-    "<br>"
+    /<pre><code>([\s\S]*?)<\/code><\/pre>/g,
+    (m, c) =>
+      "<pre><code>" +
+      c.replace(/<br>/g, "\n").replace(/^\n/, "") +
+      "</code></pre>"
   );
+
+  html = html.replace(/(<\/(?:h[123]|li|pre)>)<br>/g, "$1");
 
   return html;
 }
@@ -275,9 +286,13 @@ function renderMessages() {
           How can I help you?
         </h1>
 
-        <p>
-          Ask anything and chat with Dhairya GPT.
-        </p>
+        <p>Ask anything, or start with one of these.</p>
+        <div class="chips">
+          <button class="chip" data-prompt="Explain how the internet works in simple terms"><b>Explain something</b><small>How the internet works, simply</small></button>
+          <button class="chip" data-prompt="Write a short, friendly email asking my teacher for an extension"><b>Write an email</b><small>Ask a teacher for an extension</small></button>
+          <button class="chip" data-prompt="Give me a 3-day beginner workout plan"><b>Make a plan</b><small>3-day beginner workout</small></button>
+          <button class="chip" data-prompt="Help me write a JavaScript function that reverses a string"><b>Write code</b><small>Reverse a string in JavaScript</small></button>
+        </div>
 
       </div>
 
@@ -315,9 +330,9 @@ function renderMessages() {
 
 
       bubble.innerHTML =
-        renderMarkdown(
-          message.content
-        );
+        message.role === "assistant" && !message.content && isGenerating
+          ? '<span class="typing"><i></i><i></i><i></i></span>'
+          : renderMarkdown(message.content);
 
 
       if (
@@ -348,9 +363,10 @@ function renderMessages() {
           "[data-copy]"
         ).onclick = () => {
 
-          navigator.clipboard.writeText(
-            message.content
-          );
+          navigator.clipboard.writeText(message.content);
+          const b = actions.querySelector("[data-copy]");
+          b.textContent = "Copied";
+          setTimeout(() => (b.textContent = "Copy"), 1200);
 
         };
 
@@ -368,6 +384,14 @@ function renderMessages() {
       }
 
 
+      if (message.role === "assistant") {
+        const av = document.createElement("img");
+        av.src = "/logo.svg";
+        av.className = "avatar";
+        av.alt = "";
+        row.appendChild(av);
+      }
+
       row.appendChild(bubble);
 
       container.appendChild(row);
@@ -382,6 +406,8 @@ function renderMessages() {
 
 function renderAll() {
 
+  document.body.classList.remove("sidebar-open");
+
   renderChatList();
 
   renderMessages();
@@ -394,17 +420,16 @@ function setGenerating(value) {
 
   isGenerating = value;
 
-  const button =
-    $("#sendBtn");
+  const button = $("#sendBtn");
 
-  if (!button) {
-    return;
+  if (button) {
+    button.innerHTML = value ? ICON_STOP : ICON_SEND;
+    button.title = value ? "Stop" : "Send";
   }
 
-  button.disabled = value;
-
-  button.textContent =
-    value ? "Stop" : "Send";
+  if (!value) {
+    renderMessages();
+  }
 }
 
 
@@ -473,6 +498,8 @@ async function generateResponse(chat) {
 
   setGenerating(true);
 
+  abortController = new AbortController();
+
 
   chat.messages.push({
     role: "assistant",
@@ -515,6 +542,8 @@ async function generateResponse(chat) {
         CONFIG.API_URL,
         {
           method: "POST",
+
+          signal: abortController.signal,
 
           headers: {
             "Content-Type":
@@ -662,9 +691,13 @@ async function generateResponse(chat) {
 
   } catch (error) {
 
-    assistantMessage.content =
-      "Error: " +
-      error.message;
+    if (error.name === "AbortError") {
+      if (!assistantMessage.content) {
+        assistantMessage.content = "(Stopped)";
+      }
+    } else {
+      assistantMessage.content = "Error: " + error.message;
+    }
 
     saveChats();
 
@@ -802,8 +835,15 @@ function setupComposer() {
   }
 
 
-  send.onclick =
-    sendMessage;
+  send.innerHTML = ICON_SEND;
+
+  send.onclick = () => {
+    if (isGenerating) {
+      abortController?.abort();
+    } else {
+      sendMessage();
+    }
+  };
 
 
   input.addEventListener(
@@ -843,7 +883,32 @@ function setupComposer() {
 
 /* BUTTONS */
 
+function toggleSidebar() {
+
+  if (window.innerWidth <= 760) {
+    document.body.classList.toggle("sidebar-open");
+  } else {
+    document.body.classList.toggle("sidebar-collapsed");
+  }
+}
+
+
 function setupButtons() {
+
+  document
+    .querySelectorAll("[data-toggle-sidebar]")
+    .forEach(b => (b.onclick = toggleSidebar));
+
+  $("#messages").addEventListener("click", event => {
+
+    const chip = event.target.closest(".chip");
+
+    if (chip) {
+      $("#messageInput").value = chip.dataset.prompt;
+      sendMessage();
+    }
+  });
+
 
   const newChat =
     $("#newChatBtn");
