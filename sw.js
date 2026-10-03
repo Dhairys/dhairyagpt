@@ -1,5 +1,5 @@
 // Minimal service worker: caches the app shell, never touches /api/ calls.
-const CACHE = "dhairya-gpt-v1";
+const CACHE = "dhairya-gpt-v2";
 const SHELL = ["/", "/index.html", "/app.js", "/logo.svg", "/terms.html"];
 
 self.addEventListener("install", e => {
@@ -27,6 +27,6 @@ self.addEventListener("fetch", e => {
         caches.open(CACHE).then(c => c.put(e.request, copy));
         return res;
       })
-      .catch(() => caches.match(e.request))
+      .catch(() => caches.match(e.request, { ignoreSearch: true }))
   );
 });

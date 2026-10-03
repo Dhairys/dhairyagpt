@@ -121,7 +121,7 @@ function renderMarkdown(text) {
   let html = escapeHtml(text);
 
   html = html.replace(
-    /```([\s\S]*?)```/g,
+    /```[a-zA-Z0-9+#-]*\n?([\s\S]*?)```/g,
     "<pre><code>$1</code></pre>"
   );
 
@@ -170,7 +170,12 @@ function renderMarkdown(text) {
       "</code></pre>"
   );
 
-  html = html.replace(/(<\/(?:h[123]|li|pre)>)<br>/g, "$1");
+  html = html
+    .replace(/(<\/li>)(?:<br>){2,}/g, '$1<span class="sp"></span>')
+    .replace(/(<\/li>)<br>/g, "$1")
+    .replace(/(<\/(?:h[123]|pre)>)(?:<br>)+/g, "$1")
+    .replace(/(?:<br>)+(<(?:h[123]|pre|li)>)/g, "$1")
+    .replace(/(?:<br>){2,}/g, '<span class="sp"></span>');
 
   return html;
 }
@@ -1008,6 +1013,42 @@ function setupModals() {
 }
 
 
+/* LAUNCH PARAMS (app shortcut + share target) */
+
+function handleLaunchParams() {
+
+  const q = new URLSearchParams(location.search);
+
+  if (!q.has("new") && !q.has("text") && !q.has("url") && !q.has("title")) {
+    return;
+  }
+
+  const current = getCurrentChat();
+
+  if (q.has("new") && current && current.messages.length) {
+    createChat();
+  }
+
+  const shared = [q.get("title"), q.get("text"), q.get("url")]
+    .filter(Boolean)
+    .join("\n");
+
+  const input = $("#messageInput");
+
+  if (shared && input) {
+
+    input.value = shared;
+    input.dispatchEvent(new Event("input"));
+  }
+
+  if (input) {
+    input.focus();
+  }
+
+  history.replaceState(null, "", location.pathname);
+}
+
+
 /* INITIALIZATION */
 
 function init() {
@@ -1040,6 +1081,8 @@ function init() {
   setupButtons();
 
   setupModals();
+
+  handleLaunchParams();
 }
 
 
