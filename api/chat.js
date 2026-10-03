@@ -1,28 +1,20 @@
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({
-      error: "POST requests only."
-    });
+    return res.status(405).json({ error: "POST requests only." });
   }
 
   const token = process.env.HF_TOKEN;
-
   if (!token) {
-    return res.status(500).json({
-      error: "HF_TOKEN is missing in Vercel."
-    });
+    return res.status(500).json({ error: "HF_TOKEN is missing in Vercel." });
+  }
+
+  const { messages } = req.body || {};
+  if (!Array.isArray(messages)) {
+    return res.status(400).json({ error: "Invalid messages." });
   }
 
   try {
-    const { messages } = req.body || {};
-
-    if (!Array.isArray(messages)) {
-      return res.status(400).json({
-        error: "Invalid messages."
-      });
-    }
-
-    const response = await fetch(
+    const upstream = await fetch(
       "https://router.huggingface.co/v1/chat/completions",
       {
         method: "POST",
@@ -33,30 +25,34 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           model: "Qwen/Qwen2.5-7B-Instruct",
           messages,
-          max_tokens: 512,
-          temperature: 0.7
+          max_tokens: 1024,
+          temperature: 0.7,
+          stream: true
         })
       }
     );
 
-    const result = await response.json();
-
-    if (!response.ok) {
-      return res.status(response.status).json({
+    if (!upstream.ok) {
+      const details = await upstream.text();
+      return res.status(upstream.status).json({
         error: "Hugging Face error",
-        details: result
+        details
       });
     }
 
-    return res.status(200).json({
-      reply:
-        result.choices?.[0]?.message?.content || ""
-    });
+    // Stream the SSE response straight through to the browser
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("Connection", "keep-alive");
 
+    for await (const chunk of upstream.body) {
+      res.write(chunk);
+    }
+    res.end();
   } catch (error) {
-    return res.status(500).json({
-      error: "Server error",
-      details: error.message
-    });
+    if (!res.headersSent) {
+      return res.status(500).json({ error: "Server error", details: error.message });
+    }
+    res.end();
   }
 }
