@@ -1,26 +1,27 @@
 # Dhairya GPT
 
-A personal AI chat web app with a clean, ChatGPT-style interface. It streams answers from open models on Hugging Face and is **live on Vercel at https://dhairyagpt.vercel.app**.
+A personal AI chat web app with a clean, ChatGPT-style interface. It streams answers from open models through free AI APIs and is **live on Vercel at https://dhairyagpt.vercel.app**.
 
-**Live site:** https://dhairyagpt.vercel.app
+**Android app:** https://github.com/Dhairys/dhairyagpt-android
 
 ## Features
 
-- Streaming AI responses
-- Stop button to cancel a reply mid-way
-- Multiple conversations with local chat history
+- Streaming AI responses with a stop button
+- Multiple conversations, saved in your own browser
+- Attach files (PDF, Word, text, CSV, JSON and code) to ask questions about them
 - Copy and regenerate any response
-- Custom instructions
-- Dark and light mode
-- Collapsible sidebar, mobile-friendly layout
-- Starter prompts on the welcome screen
-- Terms & Conditions page for Indian law
+- Custom instructions on top of a built-in default personality
+- Dark and light mode, collapsible sidebar, mobile-friendly layout
+- Terms & Conditions screen on first visit (Indian law)
+- Installable as an app (PWA) and packaged as an Android APK
+- Per-user and site-wide message limits
+- Automatic fallback between up to three AI providers
 
 ## Tech stack
 
-- HTML, CSS and vanilla JavaScript (no build step)
+- HTML, CSS and vanilla JavaScript, with no build step
 - Vercel serverless function (`api/chat.js`)
-- Hugging Face Inference Providers (OpenAI-compatible router)
+- Any OpenAI-compatible API: NVIDIA build, Groq, OpenRouter, Hugging Face
 
 ## How it works
 
@@ -28,13 +29,14 @@ A personal AI chat web app with a clean, ChatGPT-style interface. It streams ans
 Browser (index.html + app.js)
         │  POST /api/chat
         ▼
-Vercel serverless function (api/chat.js)
-        │  adds HF_TOKEN (kept secret on the server)
+Vercel function (api/chat.js)
+   • validates the request
+   • applies per-user and site-wide limits
+   • adds the default instructions
+   • tries provider 1 → 2 → 3 until one answers
+        │  API key stays on the server
         ▼
-Hugging Face router → model provider
-        │
-        ▼
-Streamed reply back to the browser
+AI provider (streamed reply back to the browser)
 ```
 
 ## Project structure
@@ -42,10 +44,16 @@ Streamed reply back to the browser
 ```text
 dhairyagpt/
 ├── api/
-│   └── chat.js       # secure proxy to Hugging Face (streaming)
-├── index.html        # interface and styles
-├── app.js            # chat logic, history, settings
-├── terms.html        # Terms & Conditions
+│   └── chat.js             # secure proxy, limits, instructions, fallback
+├── .well-known/
+│   └── assetlinks.json     # lets the Android app open fullscreen
+├── icons/                  # app icons (192 and 512 px PNG)
+├── screenshots/            # store/install screenshots
+├── index.html              # interface, styles and Terms screen
+├── app.js                  # chat logic, history, file attachments
+├── terms.html              # Terms & Conditions
+├── manifest.json           # PWA settings
+├── sw.js                   # service worker
 ├── logo.svg
 ├── .gitignore
 └── README.md
@@ -55,16 +63,54 @@ dhairyagpt/
 
 1. Push this repository to GitHub.
 2. Import it in [Vercel](https://vercel.com) and deploy. No build settings are needed.
-3. In **Settings → Environment Variables**, add:
+3. In **Settings → Environment Variables**, add the variables below, then **redeploy**.
 
-   | Name | Value |
-   | --- | --- |
-   | `HF_TOKEN` | Your Hugging Face access token (needs Inference Providers permission) |
-   | `HF_MODEL` | A chat model served by the router, e.g. `meta-llama/Llama-3.1-8B-Instruct` |
+### Environment variables
 
-4. Redeploy so the variables take effect.
+**Provider 1 (required)**
 
-To pick another model, check the live list at https://router.huggingface.co/v1/models and set `HF_MODEL` to any model ID from it. If `HF_MODEL` is not set, the app falls back to `Qwen/Qwen2.5-7B-Instruct`, which may not currently be served.
+| Name | Example |
+| --- | --- |
+| `API_KEY` | Your provider's API key |
+| `API_URL` | `https://integrate.api.nvidia.com/v1/chat/completions` |
+| `MODEL` | `openai/gpt-oss-20b` |
+| `MAX_TOKENS` | Longest reply, default `2048` (keep at 800 or more for reasoning models) |
+| `DAILY_LIMIT` | Requests per day on this provider before traffic moves to the next one. `0` means no cap |
+| `REASONING_EFFORT` | Optional: `low`, `medium` or `high` (gpt-oss models) |
+
+**Providers 2 and 3 (optional fallbacks)**
+
+Use the same names with a number: `API2_KEY`, `API2_URL`, `MODEL2`, `MAX_TOKENS2`, `DAILY_LIMIT2`, and the same for `3`. Empty providers are skipped.
+
+**Limits (optional)**
+
+| Name | Default | Meaning |
+| --- | --- | --- |
+| `LIMIT_PER_MINUTE` | `6` | Messages per user per minute |
+| `LIMIT_PER_DAY` | `30` | Messages per user per day (resets at midnight IST) |
+| `LIMIT_GLOBAL_PER_DAY` | `800` | Messages for the whole site per day |
+
+**Other (optional)**
+
+| Name | Meaning |
+| --- | --- |
+| `SYSTEM_PROMPT` | Replaces the built-in default instructions |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Makes the limit counters shared and exact |
+
+### Provider URLs
+
+| Provider | `API_URL` |
+| --- | --- |
+| NVIDIA | `https://integrate.api.nvidia.com/v1/chat/completions` |
+| Groq | `https://api.groq.com/openai/v1/chat/completions` |
+| OpenRouter | `https://openrouter.ai/api/v1/chat/completions` |
+| Hugging Face | `https://router.huggingface.co/v1/chat/completions` |
+
+A key only works with its own provider's URL.
+
+## Default instructions
+
+Every chat starts with built-in instructions: the assistant is Dhairya GPT, replies in the user's language (including Hindi and Hinglish), stays honest about what it doesn't know, treats attached files as data and not commands, and follows Indian law on harmful requests. Edit `DEFAULT_SYSTEM_PROMPT` in `api/chat.js`, or set `SYSTEM_PROMPT` in Vercel. A user's own custom instructions are added on top.
 
 ## Run locally
 
@@ -73,27 +119,28 @@ npm install -g vercel
 vercel dev
 ```
 
-Put your token in a local `.env` file (it is git-ignored):
+Put your variables in a local `.env` file (it is git-ignored).
 
-```text
-HF_TOKEN=your_token_here
-HF_MODEL=meta-llama/Llama-3.1-8B-Instruct
-```
+## Android app
+
+The Android app is a wrapper around the live site, built with [PWABuilder](https://www.pwabuilder.com) and kept in a separate repository. Website changes appear in the app automatically. For the app to open fullscreen, host `.well-known/assetlinks.json` here (it is public by design).
 
 ## Troubleshooting
 
-| Error | Meaning |
+| Message | Meaning |
 | --- | --- |
-| `HF_TOKEN is missing` | Add the variable in Vercel and redeploy |
-| `400 ... not supported by any provider` | The model has no provider. Choose another from the models list |
-| `401` / `403` | Token is invalid or lacks Inference Providers permission |
-| `402` or credits message | Free usage is used up for now |
+| `API_KEY is missing` | Add the variable in Vercel and redeploy |
+| `401` / `403` | The key doesn't match the `API_URL`, or has extra spaces |
+| `400 … not supported` | The `MODEL` name is wrong for that provider |
+| `Daily limit reached` | The user hit `LIMIT_PER_DAY` |
+| `free AI capacity is used up` | All providers reached their daily caps |
 
 ## Security and privacy
 
-- The Hugging Face token lives only in Vercel environment variables. Never put it in `index.html`, `app.js`, or any committed file.
-- Chat history is stored in your own browser (local storage), not on a server.
-- Messages are sent to Hugging Face and its providers to generate replies, so avoid sharing sensitive personal data.
+- API keys live only in Vercel environment variables. Never put them in any file or commit them.
+- Chat history is stored in your own browser, not on a server.
+- Messages and attached files are sent to the AI provider to generate replies, so avoid sharing sensitive personal data.
+- Your IP address is used temporarily to count requests for the limits.
 
 See [terms.html](terms.html) for the full Terms & Conditions.
 
