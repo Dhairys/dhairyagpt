@@ -23,7 +23,7 @@ export default async function handler(req, res) {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          model: "Qwen/Qwen2.5-7B-Instruct",
+          model: process.env.HF_MODEL || "Qwen/Qwen2.5-7B-Instruct",
           messages,
           max_tokens: 1024,
           temperature: 0.7,
@@ -33,10 +33,14 @@ export default async function handler(req, res) {
     );
 
     if (!upstream.ok) {
-      const details = await upstream.text();
+      const raw = await upstream.text();
+      let message = raw;
+      try {
+        const j = JSON.parse(raw);
+        message = j?.error?.message || j?.error || raw;
+      } catch {}
       return res.status(upstream.status).json({
-        error: "Hugging Face error",
-        details
+        error: `Hugging Face ${upstream.status}: ${message}`
       });
     }
 
