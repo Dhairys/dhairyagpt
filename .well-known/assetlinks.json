@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.vercel.dhairyagpt.twa",
+        "sha256_cert_fingerprints": ["04:A6:FB:52:6E:12:D3:20:9F:96:B5:BD:A1:4C:DA:E6:4C:EA:BB:25:39:D0:9E:67:60:09:F6:16:52:94:87:9C"]
+      }
+    }]
