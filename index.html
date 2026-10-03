@@ -68,6 +68,17 @@ body.sidebar-collapsed #menuBtn{display:grid}
 .message-actions{display:flex;gap:2px;margin-top:6px}
 .message-actions button{font-size:12.5px;color:var(--muted);padding:4px 10px;border-radius:8px}
 .message-actions button:hover{background:var(--hover);color:var(--text)}
+.attach-btn{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:var(--muted);flex:none}
+.attach-btn:hover{background:var(--hover);color:var(--text)}
+.file-tray{max-width:var(--w);margin:0 auto;display:flex;flex-wrap:wrap;gap:8px}
+.file-tray:not(:empty){margin-bottom:8px}
+.file-chip{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 6px 6px 10px;max-width:260px;font-size:13.5px}
+.file-chip svg{width:16px;height:16px;color:var(--muted)}
+.file-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-chip button{width:22px;height:22px;border-radius:50%;color:var(--muted);line-height:1}
+.file-chip button:hover{background:var(--hover);color:var(--text)}
+.msg-files{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
+.msg-file{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:3px 10px;font-size:13px}
 .sp{display:block;height:.75em}
 .typing{display:inline-flex;gap:5px;padding:10px 0}
 .typing i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:b 1.2s infinite ease-in-out}
@@ -75,7 +86,7 @@ body.sidebar-collapsed #menuBtn{display:grid}
 .typing + .message-actions{display:none}
 @keyframes b{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-4px)}}
 .composer-wrap{padding:0 16px calc(12px + env(safe-area-inset-bottom,0px))}
-.composer{max-width:var(--w);margin:0 auto;background:var(--panel);border:1px solid var(--line);border-radius:26px;display:flex;align-items:flex-end;gap:8px;padding:8px 8px 8px 20px;box-shadow:0 2px 14px rgba(0,0,0,.12)}
+.composer{max-width:var(--w);margin:0 auto;background:var(--panel);border:1px solid var(--line);border-radius:26px;display:flex;align-items:flex-end;gap:6px;padding:8px 8px 8px 8px;box-shadow:0 2px 14px rgba(0,0,0,.12)}
 .composer:focus-within{border-color:var(--muted)}
 #messageInput{flex:1;resize:none;max-height:180px;padding:9px 0;border:0;background:none;color:var(--text);font:inherit;outline:none}
 #messageInput::placeholder{color:var(--muted)}
@@ -128,7 +139,10 @@ body.sidebar-collapsed #menuBtn{display:grid}
   </div>
   <div id="messages"></div>
   <div class="composer-wrap">
+    <div id="fileTray" class="file-tray"></div>
     <div class="composer">
+      <button id="attachBtn" class="attach-btn" title="Attach a file"><svg viewBox="0 0 24 24"><path d="M21 11.5l-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l8.6-8.6a3.7 3.7 0 0 1 5.2 5.2l-8.6 8.6a1.8 1.8 0 0 1-2.6-2.6l7.9-7.9"/></svg></button>
+      <input id="fileInput" type="file" multiple hidden accept=".txt,.md,.csv,.tsv,.json,.js,.jsx,.ts,.tsx,.py,.java,.c,.cpp,.h,.cs,.go,.rs,.php,.rb,.sh,.html,.css,.xml,.yml,.yaml,.sql,.log,.ini,.toml,.pdf,.docx">
       <textarea id="messageInput" rows="1" placeholder="Message Dhairya GPT" autofocus></textarea>
       <button id="sendBtn" title="Send"></button>
     </div>

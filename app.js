@@ -17,6 +17,11 @@ let settings = JSON.parse(
 let currentChatId = null;
 let isGenerating = false;
 let abortController = null;
+let pendingFiles = [];
+
+const MAX_FILE_CHARS = 40000;
+const MAX_FILES = 3;
+const TEXT_EXT = /\.(txt|md|csv|tsv|json|js|jsx|ts|tsx|py|java|c|cpp|h|cs|go|rs|php|rb|sh|html|css|xml|yml|yaml|sql|log|ini|toml)$/i;
 
 const ICON_SEND = '<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
 const ICON_STOP = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="6" width="12" height="12" rx="2.5"/></svg>';
@@ -28,16 +33,188 @@ const $ = selector =>
 /* STORAGE */
 
 function saveChats() {
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(chats)
-  );
+
+  try {
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(chats)
+    );
+
+  } catch {
+
+    alert("Browser storage is full. Delete some old chats.");
+  }
 }
 
 function saveSettings() {
   localStorage.setItem(
     SETTINGS_KEY,
     JSON.stringify(settings)
+  );
+}
+
+
+/* FILE ATTACHMENTS */
+
+function loadScript(url) {
+
+  return new Promise((resolve, reject) => {
+
+    const el = document.createElement("script");
+    el.src = url;
+    el.onload = resolve;
+    el.onerror = () => reject(new Error("Could not load file reader."));
+    document.head.appendChild(el);
+  });
+}
+
+
+async function extractText(file) {
+
+  const name = file.name.toLowerCase();
+
+  if (name.endsWith(".pdf")) {
+
+    await loadScript(
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"
+    );
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+    const pdf = await pdfjsLib.getDocument({
+      data: await file.arrayBuffer()
+    }).promise;
+
+    let out = "";
+
+    for (let i = 1; i <= Math.min(pdf.numPages, 60); i++) {
+
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      out += content.items.map(it => it.str).join(" ") + "\n\n";
+    }
+
+    return out;
+  }
+
+  if (name.endsWith(".docx")) {
+
+    await loadScript(
+      "https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"
+    );
+
+    const result = await mammoth.extractRawText({
+      arrayBuffer: await file.arrayBuffer()
+    });
+
+    return result.value;
+  }
+
+  if (file.type.startsWith("text/") || TEXT_EXT.test(name)) {
+    return await file.text();
+  }
+
+  throw new Error("Unsupported file type.");
+}
+
+
+async function handleFiles(fileList) {
+
+  for (const file of Array.from(fileList)) {
+
+    if (pendingFiles.length >= MAX_FILES) {
+      alert("You can attach up to " + MAX_FILES + " files per message.");
+      break;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert(file.name + " is too large (max 10 MB).");
+      continue;
+    }
+
+    try {
+
+      let text = (await extractText(file)).trim();
+
+      if (!text) {
+        throw new Error("No readable text found (scanned PDFs and images are not supported).");
+      }
+
+      let truncated = false;
+
+      if (text.length > MAX_FILE_CHARS) {
+        text = text.slice(0, MAX_FILE_CHARS) + "\n[...file truncated]";
+        truncated = true;
+      }
+
+      pendingFiles.push({ name: file.name, text, truncated });
+
+    } catch (error) {
+
+      alert(file.name + ": " + error.message);
+    }
+
+    renderTray();
+  }
+}
+
+
+function renderTray() {
+
+  const tray = $("#fileTray");
+
+  if (!tray) {
+    return;
+  }
+
+  tray.innerHTML = "";
+
+  pendingFiles.forEach((file, i) => {
+
+    const chip = document.createElement("div");
+    chip.className = "file-chip";
+
+    chip.innerHTML =
+      '<svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5"/></svg>' +
+      "<span>" + escapeHtml(file.name) +
+      (file.truncated ? " (truncated)" : "") + "</span>" +
+      '<button title="Remove">×</button>';
+
+    chip.querySelector("button").onclick = () => {
+      pendingFiles.splice(i, 1);
+      renderTray();
+    };
+
+    tray.appendChild(chip);
+  });
+}
+
+
+function buildContent(text, files) {
+
+  const parts = files.map(
+    f => "[Attached file: " + f.name + "]\n" + f.text + "\n[End of file]"
+  );
+
+  return (
+    parts.join("\n\n") +
+    "\n\n" +
+    (text || "Please summarize this file.")
+  ).trim();
+}
+
+
+function userFilesHtml(message) {
+
+  const chips = message.files
+    .map(n => '<span class="msg-file">📄 ' + escapeHtml(n) + "</span>")
+    .join("");
+
+  return (
+    '<div class="msg-files">' + chips + "</div>" +
+    renderMarkdown(message.text || "")
   );
 }
 
@@ -337,7 +514,9 @@ function renderMessages() {
       bubble.innerHTML =
         message.role === "assistant" && !message.content && isGenerating
           ? '<span class="typing"><i></i><i></i><i></i></span>'
-          : renderMarkdown(message.content);
+          : message.files
+            ? userFilesHtml(message)
+            : renderMarkdown(message.content);
 
 
       if (
@@ -451,12 +630,15 @@ async function sendMessage() {
     return;
   }
 
-  const content =
-    input.value.trim();
+  const text = input.value.trim();
 
-  if (!content) {
+  if (!text && !pendingFiles.length) {
     return;
   }
+
+  const files = pendingFiles.slice();
+
+  const content = buildContent(text, files);
 
 
   if (!currentChatId) {
@@ -474,7 +656,9 @@ async function sendMessage() {
 
   chat.messages.push({
     role: "user",
-    content
+    content,
+    text,
+    files: files.map(f => f.name)
   });
 
 
@@ -482,14 +666,20 @@ async function sendMessage() {
     chat.title === "New chat"
   ) {
 
-    chat.title =
-      content.length > 40
-        ? content.substring(0, 40) + "..."
-        : content;
+    chat.title = (() => {
+      const t = text || files[0]?.name || "New chat";
+      return t.length > 40 ? t.substring(0, 40) + "..." : t;
+    })();
   }
 
 
   input.value = "";
+
+  input.style.height = "auto";
+
+  pendingFiles = [];
+
+  renderTray();
 
   saveChats();
 
@@ -526,7 +716,8 @@ async function generateResponse(chat) {
     let messages =
       chat.messages
         .slice(0, -1)
-        .slice(-CONFIG.MAX_MESSAGES);
+        .slice(-CONFIG.MAX_MESSAGES)
+        .map(m => ({ role: m.role, content: m.content }));
 
 
     if (settings.instructions) {
@@ -899,6 +1090,20 @@ function toggleSidebar() {
 
 
 function setupButtons() {
+
+  const attach = $("#attachBtn");
+  const fileInput = $("#fileInput");
+
+  if (attach && fileInput) {
+
+    attach.onclick = () => fileInput.click();
+
+    fileInput.onchange = () => {
+      handleFiles(fileInput.files);
+      fileInput.value = "";
+    };
+  }
+
 
   document
     .querySelectorAll("[data-toggle-sidebar]")
