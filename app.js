@@ -19,7 +19,7 @@ let isGenerating = false;
 let abortController = null;
 let pendingFiles = [];
 
-/* GAME MODE: the panel has a Video tab and a Game tab. Only embed content you have the right to embed. */
+/* LOSING FOCUS? PANEL: the panel has a Video tab and a Game tab. Only embed content you have the right to embed. */
 const VIDEO_ID = "QPW3XwBoQlw"; // Subway Surfers gameplay (SYBO TV, vertical 9:16). Change to any embeddable YouTube video ID.
 const VIDEO_URL =
   "https://www.youtube-nocookie.com/embed/" + VIDEO_ID +
@@ -69,7 +69,7 @@ function saveSettings() {
 }
 
 
-/* GAME MODE */
+/* LOSING FOCUS? PANEL */
 
 function loadGameFrame() {
 
@@ -1365,6 +1365,99 @@ function handleLaunchParams() {
 }
 
 
+/* KEYBOARD SHORTCUT: hold Ctrl (or Cmd) and press D + S + B together */
+
+const SHORTCUT_KEYS = ["KeyD", "KeyS", "KeyB"];
+
+const RICK_URL =
+  "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1&rel=0&playsinline=1";
+
+function startRickroll() {
+
+  const overlay = $("#rickOverlay");
+  const frame = $("#rickFrame");
+
+  if (!overlay || !frame) {
+    return;
+  }
+
+  frame.src = RICK_URL;
+  overlay.hidden = false;
+}
+
+function stopRickroll() {
+
+  const overlay = $("#rickOverlay");
+  const frame = $("#rickFrame");
+
+  if (!overlay || !frame) {
+    return;
+  }
+
+  frame.src = "about:blank";
+  overlay.hidden = true;
+}
+
+// What the shortcut does. Press it again (or press Esc) to stop.
+function onShortcut() {
+
+  const overlay = $("#rickOverlay");
+
+  if (overlay && !overlay.hidden) {
+    stopRickroll();
+  } else {
+    startRickroll();
+  }
+}
+
+function setupShortcut() {
+
+  const held = new Set();
+
+  document.addEventListener("keydown", event => {
+
+    const ctrl = event.ctrlKey || event.metaKey;
+
+    if (!ctrl || !SHORTCUT_KEYS.includes(event.code)) {
+      return;
+    }
+
+    // Stop the browser's own Ctrl+D / Ctrl+S / Ctrl+B actions
+    event.preventDefault();
+
+    held.add(event.code);
+
+    if (SHORTCUT_KEYS.every(k => held.has(k))) {
+      held.clear();
+      onShortcut();
+    }
+  });
+
+  document.addEventListener("keyup", event => {
+
+    held.delete(event.code);
+
+    if (event.key === "Control" || event.key === "Meta") {
+      held.clear();
+    }
+  });
+
+  window.addEventListener("blur", () => held.clear());
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+      stopRickroll();
+    }
+  });
+
+  const close = $("#rickClose");
+
+  if (close) {
+    close.onclick = stopRickroll;
+  }
+}
+
+
 /* INITIALIZATION */
 
 function init() {
@@ -1399,6 +1492,8 @@ function init() {
   setupModals();
 
   handleLaunchParams();
+
+  setupShortcut();
 
   setupAds();
 }
