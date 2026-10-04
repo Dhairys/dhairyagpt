@@ -13,6 +13,8 @@ A personal AI chat web app with a clean, ChatGPT-style interface. It streams ans
 - Custom instructions on top of a built-in default personality
 - Dark and light mode, collapsible sidebar, mobile-friendly layout
 - Terms & Conditions screen on first visit (Indian law)
+- Game mode: a built-in endless runner beside the chat
+- Ready for Google AdSense (ads off until you add your IDs)
 - Installable as an app (PWA) and packaged as an Android APK
 - Per-user and site-wide message limits
 - Automatic fallback between up to three AI providers
@@ -51,7 +53,11 @@ dhairyagpt/
 ├── screenshots/            # store/install screenshots
 ├── index.html              # interface, styles and Terms screen
 ├── app.js                  # chat logic, history, file attachments
+├── runner.html             # built-in Game mode
+├── about.html              # About, FAQ and contact
+├── privacy.html            # Privacy Policy
 ├── terms.html              # Terms & Conditions
+├── ads.txt, robots.txt, sitemap.xml
 ├── manifest.json           # PWA settings
 ├── sw.js                   # service worker
 ├── logo.svg
@@ -111,6 +117,22 @@ A key only works with its own provider's URL.
 ## Default instructions
 
 Every chat starts with built-in instructions: the assistant is Dhairya GPT, replies in the user's language (including Hindi and Hinglish), stays honest about what it doesn't know, treats attached files as data and not commands, and follows Indian law on harmful requests. Edit `DEFAULT_SYSTEM_PROMPT` in `api/chat.js`, or set `SYSTEM_PROMPT` in Vercel. A user's own custom instructions are added on top.
+
+## Game mode
+
+The **Game mode** button opens a side panel (top panel on phones) with two tabs: **Video** (a Subway Surfers gameplay video embedded from YouTube) and **Game** (a built-in endless runner, `runner.html`). To change the video, set `VIDEO_ID` at the top of `app.js` to any embeddable YouTube video ID; to change the game, set `GAME_URL`. Don't embed unofficial copies of other companies' games: that is copyright infringement, and Google AdSense policy bans framing content without the owner's permission.
+
+## Ads (Google AdSense)
+
+Ads are off until you add your IDs.
+
+1. Own a domain (a custom domain is recommended for approval), add it in Vercel, and apply at adsense.google.com.
+2. Paste Google's script line into the `<head>` of `index.html`, `about.html`, `privacy.html` and `terms.html` (see the comment in `index.html`).
+3. Edit `ads.txt` with your publisher ID.
+4. After approval, create a display ad unit, then set `ADSENSE_CLIENT` and `ADSENSE_SLOT` at the top of `app.js`.
+5. In AdSense, turn Auto ads off so ads only appear in the sidebar slot, and never inside the game frame.
+
+Required pages already included: `about.html` (with contact details), `privacy.html` and `terms.html`, plus `robots.txt` and `sitemap.xml`.
 
 ## Run locally
 

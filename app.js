@@ -19,7 +19,21 @@ let isGenerating = false;
 let abortController = null;
 let pendingFiles = [];
 
-const MAX_FILE_CHARS = 40000;
+/* GAME MODE: the panel has a Video tab and a Game tab. Only embed content you have the right to embed. */
+const VIDEO_ID = "QPW3XwBoQlw"; // Subway Surfers gameplay (SYBO TV, vertical 9:16). Change to any embeddable YouTube video ID.
+const VIDEO_URL =
+  "https://www.youtube-nocookie.com/embed/" + VIDEO_ID +
+  "?autoplay=1&mute=1&loop=1&playlist=" + VIDEO_ID +
+  "&playsinline=1&rel=0&modestbranding=1";
+const GAME_URL = "/runner.html"; // built-in Lane Runner
+let gameMode = "video";
+
+/* ADS: fill both in after Google AdSense approves your site (leave empty to keep ads off). */
+const ADSENSE_CLIENT = ""; // e.g. "ca-pub-1234567890123456"
+const ADSENSE_SLOT = "";   // your ad unit's slot ID, e.g. "1234567890"
+let adsLoaded = false;
+
+const MAX_FILE_CHARS = 15000;
 const MAX_FILES = 3;
 const TEXT_EXT = /\.(txt|md|csv|tsv|json|js|jsx|ts|tsx|py|java|c|cpp|h|cs|go|rs|php|rb|sh|html|css|xml|yml|yaml|sql|log|ini|toml)$/i;
 
@@ -52,6 +66,86 @@ function saveSettings() {
     SETTINGS_KEY,
     JSON.stringify(settings)
   );
+}
+
+
+/* GAME MODE */
+
+function loadGameFrame() {
+
+  const frame = $("#gameFrame");
+
+  if (!frame) {
+    return;
+  }
+
+  frame.src = gameMode === "video" ? VIDEO_URL : GAME_URL;
+
+  document.querySelectorAll(".game-tabs button").forEach(b => {
+    b.classList.toggle("on", b.dataset.mode === gameMode);
+  });
+}
+
+
+function toggleGame() {
+
+  const on = document.body.classList.toggle("game-on");
+  const frame = $("#gameFrame");
+
+  if (!frame) {
+    return;
+  }
+
+  if (on) {
+    loadGameFrame();
+  } else {
+    frame.src = "about:blank";
+  }
+}
+
+
+/* ADS (Google AdSense) */
+
+function setupAds() {
+
+  if (adsLoaded || !ADSENSE_CLIENT || !ADSENSE_SLOT) {
+    return;
+  }
+
+  if (document.documentElement.classList.contains("needs-terms")) {
+    return;
+  }
+
+  const box = $("#adBox");
+  const slot = $("#adSlot");
+
+  if (!box || !slot) {
+    return;
+  }
+
+  adsLoaded = true;
+
+  if (!document.querySelector('script[src*="adsbygoogle.js"]')) {
+
+    const script = document.createElement("script");
+    script.async = true;
+    script.crossOrigin = "anonymous";
+    script.src =
+      "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=" +
+      ADSENSE_CLIENT;
+    document.head.appendChild(script);
+  }
+
+  slot.innerHTML =
+    '<ins class="adsbygoogle" style="display:block" data-ad-client="' +
+    ADSENSE_CLIENT + '" data-ad-slot="' + ADSENSE_SLOT +
+    '" data-ad-format="auto" data-full-width-responsive="true"></ins>';
+
+  box.hidden = false;
+
+  try {
+    (window.adsbygoogle = window.adsbygoogle || []).push({});
+  } catch {}
 }
 
 
@@ -773,6 +867,10 @@ async function generateResponse(chat) {
       } catch {}
 
 
+      if (response.status === 429 || response.status === 413) {
+        throw new Error(errorText);
+      }
+
       throw new Error(
         `Server error ${response.status}: ${errorText}`
       );
@@ -1091,6 +1189,19 @@ function toggleSidebar() {
 
 function setupButtons() {
 
+  const gameBtn = $("#gameBtn");
+  const gameClose = $("#gameClose");
+
+  if (gameBtn) gameBtn.onclick = toggleGame;
+  if (gameClose) gameClose.onclick = toggleGame;
+
+  document.querySelectorAll(".game-tabs button").forEach(b => {
+    b.onclick = () => {
+      gameMode = b.dataset.mode;
+      loadGameFrame();
+    };
+  });
+
   const attach = $("#attachBtn");
   const fileInput = $("#fileInput");
 
@@ -1288,6 +1399,8 @@ function init() {
   setupModals();
 
   handleLaunchParams();
+
+  setupAds();
 }
 
 

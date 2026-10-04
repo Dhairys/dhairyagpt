@@ -1,14 +1,20 @@
 <!DOCTYPE html>
 <html lang="en" data-t="dark">
 <head>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1355818149189082"
+     crossorigin="anonymous"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Dhairya GPT</title>
 <link rel="icon" href="/logo.svg" type="image/svg+xml">
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#18181A">
+<!-- AdSense: after AdSense gives you your code, paste the <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> line here (and in about.html, privacy.html, terms.html). -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+try{var a=JSON.parse(localStorage.getItem("dhairya_terms")||"null");if(!a||a.v!=="2026-10-04")document.documentElement.classList.add("needs-terms")}catch(e){document.documentElement.classList.add("needs-terms")}
+</script>
 <style>
 :root{--bg:#17171a;--side:#121214;--panel:#212126;--hover:#26262c;--line:#2c2c33;--text:#ececf1;--muted:#8e8e99;--accent:#5eead4;--ink:#04201c;--user:#2a2a31;--code:#0e0e10;--w:760px}
 html[data-t="light"]{--bg:#fff;--side:#f6f6f8;--panel:#f1f1f4;--hover:#e8e8ec;--line:#e2e2e7;--text:#1a1a1f;--muted:#6e6e78;--accent:#0f766e;--ink:#fff;--user:#eeeef2;--code:#f1f1f4}
@@ -79,6 +85,37 @@ body.sidebar-collapsed #menuBtn{display:grid}
 .file-chip button:hover{background:var(--hover);color:var(--text)}
 .msg-files{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
 .msg-file{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:3px 10px;font-size:13px}
+#termsGate{display:none;position:fixed;inset:0;z-index:100;background:var(--bg);overflow-y:auto;padding:24px 16px;align-items:center;justify-content:center}
+html.needs-terms #termsGate{display:flex}
+html.needs-terms body{overflow:hidden}
+.gate-box{width:100%;max-width:520px;margin:auto;text-align:left}
+.gate-box img{width:56px;height:56px;border-radius:16px}
+.gate-box h1{font-size:26px;letter-spacing:-.02em;margin:16px 0 4px}
+.gate-box .sub{color:var(--muted);margin:0 0 18px}
+.gate-box ul{list-style:none;padding:0;margin:0 0 18px;display:grid;gap:10px}
+.gate-box li{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:14.5px;line-height:1.5}
+.gate-box li b{display:block;margin-bottom:1px}
+.gate-box a{color:var(--accent)}
+.gate-check{display:flex;gap:10px;align-items:flex-start;margin:16px 0;font-size:14.5px;cursor:pointer}
+.gate-check input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent);flex:none}
+#agreeBtn{width:100%;padding:13px;border-radius:14px;background:var(--accent);color:var(--ink);font-weight:600;font-size:15px}
+#agreeBtn:disabled{opacity:.4;cursor:not-allowed}
+.game-btn{margin-left:auto;display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;border:1px solid var(--line);color:var(--muted);font-size:13.5px}
+.game-btn:hover,body.game-on .game-btn{background:var(--hover);color:var(--text)}
+.game-btn svg{width:18px;height:18px}
+.game-panel{display:none;width:360px;flex:none;flex-direction:column;border-left:1px solid var(--line);background:var(--side);height:100%}
+body.game-on .game-panel{display:flex}
+.game-head{display:flex;align-items:center;justify-content:space-between;padding:6px 8px 6px 12px}
+.game-head .icon-btn{font-size:22px;line-height:1}
+.game-tabs{display:flex;gap:4px;background:var(--panel);border-radius:999px;padding:3px}
+.game-tabs button{padding:4px 14px;border-radius:999px;font-size:13px;color:var(--muted)}
+.game-tabs button.on{background:var(--accent);color:var(--ink);font-weight:600}
+#gameFrame{flex:1;width:100%;border:0;background:#17171a}
+.ad-box{margin:6px 0;text-align:center;color:var(--muted);overflow:hidden;max-height:280px}
+.ad-box small{font-size:11px;display:block;margin-bottom:2px}
+.foot-links{display:flex;justify-content:center;gap:16px;padding:8px 0 2px;font-size:12.5px}
+.foot-links a{color:var(--muted);text-decoration:none}
+.foot-links a:hover{color:var(--text)}
 .sp{display:block;height:.75em}
 .typing{display:inline-flex;gap:5px;padding:10px 0}
 .typing i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:b 1.2s infinite ease-in-out}
@@ -104,6 +141,12 @@ body.sidebar-collapsed #menuBtn{display:grid}
 .pill.primary{background:var(--accent);color:var(--ink);border-color:transparent;font-weight:600}
 .backdrop{display:none}
 @media(max-width:760px){
+ .ad-box{display:none!important}
+ .game-btn span{display:none}
+ .game-btn{padding:8px}
+ body.game-on{flex-direction:column}
+ body.game-on main{flex:1;min-height:0;height:auto}
+ body.game-on .game-panel{order:-1;width:100%;height:42%;flex:none;border-left:0;border-bottom:1px solid var(--line)}
  .sidebar{position:fixed;inset:0 auto 0 0;z-index:20;transform:translateX(-100%);margin-left:0!important;width:285px}
  body.sidebar-open .sidebar{transform:none}
  body.sidebar-open .backdrop{display:block;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:15}
@@ -124,11 +167,12 @@ body.sidebar-collapsed #menuBtn{display:grid}
   <button id="newChatBtn" class="row-btn"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New chat</button>
   <div class="label">Recent</div>
   <div id="chatList"></div>
+  <div id="adBox" class="ad-box" hidden><small>Advertisement</small><div id="adSlot"></div></div>
   <div class="side-foot">
     <button id="instructionsBtn" class="row-btn"><svg viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Custom instructions</button>
     <button id="themeBtn" class="row-btn"><svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>Light / dark</button>
     <button id="clearChatsBtn" class="row-btn"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>Delete all chats</button>
-    <a href="/terms.html" class="row-btn" target="_blank"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5M9 13h6M9 17h6"/></svg>Terms &amp; Conditions</a>
+    <div class="foot-links"><a href="/about.html" target="_blank">About</a><a href="/privacy.html" target="_blank">Privacy</a><a href="/terms.html" target="_blank">Terms</a></div>
   </div>
 </aside>
 
@@ -136,6 +180,7 @@ body.sidebar-collapsed #menuBtn{display:grid}
   <div class="topbar">
     <button id="menuBtn" class="icon-btn" data-toggle-sidebar title="Open sidebar"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg></button>
     <span class="title">Dhairya GPT</span>
+    <button id="gameBtn" class="game-btn" title="Game mode"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 10v5M4.5 12.5h5M15.5 11.5h.01M18 14h.01"/></svg><span>Game mode</span></button>
   </div>
   <div id="messages"></div>
   <div class="composer-wrap">
@@ -146,9 +191,17 @@ body.sidebar-collapsed #menuBtn{display:grid}
       <textarea id="messageInput" rows="1" placeholder="Message Dhairya GPT" autofocus></textarea>
       <button id="sendBtn" title="Send"></button>
     </div>
-    <div class="disclaimer">Dhairya GPT can make mistakes. Check important info. <a href="/terms.html" target="_blank" style="color:inherit">Terms</a></div>
+    <div class="disclaimer">Dhairya GPT can make mistakes. Check important info. <a href="/terms.html" target="_blank" style="color:inherit">Terms</a> · <a href="/privacy.html" target="_blank" style="color:inherit">Privacy</a></div>
   </div>
 </main>
+
+<aside id="gamePanel" class="game-panel" aria-label="Game mode">
+  <div class="game-head">
+    <div class="game-tabs"><button data-mode="video" class="on">Video</button><button data-mode="game">Game</button></div>
+    <button id="gameClose" class="icon-btn" title="Close">×</button>
+  </div>
+  <iframe id="gameFrame" title="Game mode" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin" sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-presentation allow-popups allow-popups-to-escape-sandbox"></iframe>
+</aside>
 
 <div id="instructionsModal" class="modal">
   <div class="modal-box">
@@ -162,7 +215,37 @@ body.sidebar-collapsed #menuBtn{display:grid}
   </div>
 </div>
 
+<div id="termsGate" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
+  <div class="gate-box">
+    <img src="/logo.svg" alt="">
+    <h1 id="gateTitle">Terms &amp; Conditions</h1>
+    <p class="sub">Please read and accept to continue to Dhairya GPT.</p>
+    <ul>
+      <li><b>AI can be wrong</b>Replies may be inaccurate. This is not medical, legal or financial advice.</li>
+      <li><b>Your data</b>Chats are saved only in your browser. Messages and attached files are sent to an AI provider to get a reply, so don't share passwords, Aadhaar, PAN, bank or other sensitive details.</li>
+      <li><b>Acceptable use</b>No unlawful, harmful, hateful or infringing content, in line with the IT Act, 2000 and the IT Rules, 2021.</li>
+      <li><b>Fair use limits and ads</b>The service is free, so message limits apply per user and per day, and ads may be shown to help cover costs. See the Privacy Policy for cookies.</li>
+      <li><b>Age and law</b>You must be 18 or older. These terms are governed by the laws of India.</li>
+    </ul>
+    <p style="font-size:14px;margin:0">Read the <a href="/terms.html" target="_blank" rel="noopener">full Terms &amp; Conditions</a> and the <a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a>.</p>
+    <label class="gate-check"><input type="checkbox" id="agreeCheck"><span>I am 18 or older, and I have read and agree to the Terms &amp; Conditions and Privacy Policy.</span></label>
+    <button id="agreeBtn" disabled>Agree and continue</button>
+  </div>
+</div>
+
 <script src="/app.js"></script>
+<script>
+(function(){
+  var c=document.getElementById("agreeCheck"),b=document.getElementById("agreeBtn");
+  c.onchange=function(){b.disabled=!c.checked};
+  b.onclick=function(){
+    try{localStorage.setItem("dhairya_terms",JSON.stringify({v:"2026-10-04",t:Date.now()}))}catch(e){}
+    document.documentElement.classList.remove("needs-terms");
+    if(window.setupAds)setupAds();
+    var i=document.getElementById("messageInput");if(i)i.focus();
+  };
+})();
+</script>
 <script>if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}))}</script>
 </body>
 </html>
