@@ -132,7 +132,7 @@ A key only works with its own provider's URL.
 
 ## Default instructions
 
-Every chat starts with built-in instructions: the assistant is Dhairya GPT, replies in the user's language (including Hindi and Hinglish), stays honest about what it doesn't know, treats attached files as data and not commands, and follows Indian law on harmful requests. Edit `DEFAULT_SYSTEM_PROMPT` in `api/chat.js`, or set `SYSTEM_PROMPT` in Vercel. A user's own custom instructions are added on top.
+Every chat starts with built-in instructions: the assistant is Dhairya GPT, replies in English by default (and switches to Hindi, Hinglish or another language when the user asks or writes in it), stays honest about what it doesn't know, treats attached files as data and not commands, and follows Indian law on harmful requests. Edit `DEFAULT_SYSTEM_PROMPT` in `api/chat.js`, or set `SYSTEM_PROMPT` in Vercel. A user's own custom instructions are added on top.
 
 ## Game mode
 
