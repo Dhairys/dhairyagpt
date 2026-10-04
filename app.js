@@ -16,6 +16,29 @@ let settings = JSON.parse(
 
 let currentChatId = null;
 let isGenerating = false;
+let abortController = null;
+let pendingFiles = [];
+
+/* GAME MODE: the panel has a Video tab and a Game tab. Only embed content you have the right to embed. */
+const VIDEO_ID = "QPW3XwBoQlw"; // Subway Surfers gameplay (SYBO TV, vertical 9:16). Change to any embeddable YouTube video ID.
+const VIDEO_URL =
+  "https://www.youtube-nocookie.com/embed/" + VIDEO_ID +
+  "?autoplay=1&mute=1&loop=1&playlist=" + VIDEO_ID +
+  "&playsinline=1&rel=0&modestbranding=1";
+const GAME_URL = "/runner.html"; // built-in Lane Runner
+let gameMode = "video";
+
+/* ADS: fill both in after Google AdSense approves your site (leave empty to keep ads off). */
+const ADSENSE_CLIENT = ""; // e.g. "ca-pub-1234567890123456"
+const ADSENSE_SLOT = "";   // your ad unit's slot ID, e.g. "1234567890"
+let adsLoaded = false;
+
+const MAX_FILE_CHARS = 15000;
+const MAX_FILES = 3;
+const TEXT_EXT = /\.(txt|md|csv|tsv|json|js|jsx|ts|tsx|py|java|c|cpp|h|cs|go|rs|php|rb|sh|html|css|xml|yml|yaml|sql|log|ini|toml)$/i;
+
+const ICON_SEND = '<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+const ICON_STOP = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="6" width="12" height="12" rx="2.5"/></svg>';
 
 const $ = selector =>
   document.querySelector(selector);
@@ -24,16 +47,268 @@ const $ = selector =>
 /* STORAGE */
 
 function saveChats() {
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(chats)
-  );
+
+  try {
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(chats)
+    );
+
+  } catch {
+
+    alert("Browser storage is full. Delete some old chats.");
+  }
 }
 
 function saveSettings() {
   localStorage.setItem(
     SETTINGS_KEY,
     JSON.stringify(settings)
+  );
+}
+
+
+/* GAME MODE */
+
+function loadGameFrame() {
+
+  const frame = $("#gameFrame");
+
+  if (!frame) {
+    return;
+  }
+
+  frame.src = gameMode === "video" ? VIDEO_URL : GAME_URL;
+
+  document.querySelectorAll(".game-tabs button").forEach(b => {
+    b.classList.toggle("on", b.dataset.mode === gameMode);
+  });
+}
+
+
+function toggleGame() {
+
+  const on = document.body.classList.toggle("game-on");
+  const frame = $("#gameFrame");
+
+  if (!frame) {
+    return;
+  }
+
+  if (on) {
+    loadGameFrame();
+  } else {
+    frame.src = "about:blank";
+  }
+}
+
+
+/* ADS (Google AdSense) */
+
+function setupAds() {
+
+  if (adsLoaded || !ADSENSE_CLIENT || !ADSENSE_SLOT) {
+    return;
+  }
+
+  if (document.documentElement.classList.contains("needs-terms")) {
+    return;
+  }
+
+  const box = $("#adBox");
+  const slot = $("#adSlot");
+
+  if (!box || !slot) {
+    return;
+  }
+
+  adsLoaded = true;
+
+  if (!document.querySelector('script[src*="adsbygoogle.js"]')) {
+
+    const script = document.createElement("script");
+    script.async = true;
+    script.crossOrigin = "anonymous";
+    script.src =
+      "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=" +
+      ADSENSE_CLIENT;
+    document.head.appendChild(script);
+  }
+
+  slot.innerHTML =
+    '<ins class="adsbygoogle" style="display:block" data-ad-client="' +
+    ADSENSE_CLIENT + '" data-ad-slot="' + ADSENSE_SLOT +
+    '" data-ad-format="auto" data-full-width-responsive="true"></ins>';
+
+  box.hidden = false;
+
+  try {
+    (window.adsbygoogle = window.adsbygoogle || []).push({});
+  } catch {}
+}
+
+
+/* FILE ATTACHMENTS */
+
+function loadScript(url) {
+
+  return new Promise((resolve, reject) => {
+
+    const el = document.createElement("script");
+    el.src = url;
+    el.onload = resolve;
+    el.onerror = () => reject(new Error("Could not load file reader."));
+    document.head.appendChild(el);
+  });
+}
+
+
+async function extractText(file) {
+
+  const name = file.name.toLowerCase();
+
+  if (name.endsWith(".pdf")) {
+
+    await loadScript(
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"
+    );
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+    const pdf = await pdfjsLib.getDocument({
+      data: await file.arrayBuffer()
+    }).promise;
+
+    let out = "";
+
+    for (let i = 1; i <= Math.min(pdf.numPages, 60); i++) {
+
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      out += content.items.map(it => it.str).join(" ") + "\n\n";
+    }
+
+    return out;
+  }
+
+  if (name.endsWith(".docx")) {
+
+    await loadScript(
+      "https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"
+    );
+
+    const result = await mammoth.extractRawText({
+      arrayBuffer: await file.arrayBuffer()
+    });
+
+    return result.value;
+  }
+
+  if (file.type.startsWith("text/") || TEXT_EXT.test(name)) {
+    return await file.text();
+  }
+
+  throw new Error("Unsupported file type.");
+}
+
+
+async function handleFiles(fileList) {
+
+  for (const file of Array.from(fileList)) {
+
+    if (pendingFiles.length >= MAX_FILES) {
+      alert("You can attach up to " + MAX_FILES + " files per message.");
+      break;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert(file.name + " is too large (max 10 MB).");
+      continue;
+    }
+
+    try {
+
+      let text = (await extractText(file)).trim();
+
+      if (!text) {
+        throw new Error("No readable text found (scanned PDFs and images are not supported).");
+      }
+
+      let truncated = false;
+
+      if (text.length > MAX_FILE_CHARS) {
+        text = text.slice(0, MAX_FILE_CHARS) + "\n[...file truncated]";
+        truncated = true;
+      }
+
+      pendingFiles.push({ name: file.name, text, truncated });
+
+    } catch (error) {
+
+      alert(file.name + ": " + error.message);
+    }
+
+    renderTray();
+  }
+}
+
+
+function renderTray() {
+
+  const tray = $("#fileTray");
+
+  if (!tray) {
+    return;
+  }
+
+  tray.innerHTML = "";
+
+  pendingFiles.forEach((file, i) => {
+
+    const chip = document.createElement("div");
+    chip.className = "file-chip";
+
+    chip.innerHTML =
+      '<svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5"/></svg>' +
+      "<span>" + escapeHtml(file.name) +
+      (file.truncated ? " (truncated)" : "") + "</span>" +
+      '<button title="Remove">×</button>';
+
+    chip.querySelector("button").onclick = () => {
+      pendingFiles.splice(i, 1);
+      renderTray();
+    };
+
+    tray.appendChild(chip);
+  });
+}
+
+
+function buildContent(text, files) {
+
+  const parts = files.map(
+    f => "[Attached file: " + f.name + "]\n" + f.text + "\n[End of file]"
+  );
+
+  return (
+    parts.join("\n\n") +
+    "\n\n" +
+    (text || "Please summarize this file.")
+  ).trim();
+}
+
+
+function userFilesHtml(message) {
+
+  const chips = message.files
+    .map(n => '<span class="msg-file">📄 ' + escapeHtml(n) + "</span>")
+    .join("");
+
+  return (
+    '<div class="msg-files">' + chips + "</div>" +
+    renderMarkdown(message.text || "")
   );
 }
 
@@ -117,7 +392,7 @@ function renderMarkdown(text) {
   let html = escapeHtml(text);
 
   html = html.replace(
-    /```([\s\S]*?)```/g,
+    /```[a-zA-Z0-9+#-]*\n?([\s\S]*?)```/g,
     "<pre><code>$1</code></pre>"
   );
 
@@ -156,10 +431,22 @@ function renderMarkdown(text) {
     "<li>$1</li>"
   );
 
+  html = html.replace(/\n/g, "<br>");
+
   html = html.replace(
-    /\n/g,
-    "<br>"
+    /<pre><code>([\s\S]*?)<\/code><\/pre>/g,
+    (m, c) =>
+      "<pre><code>" +
+      c.replace(/<br>/g, "\n").replace(/^\n/, "") +
+      "</code></pre>"
   );
+
+  html = html
+    .replace(/(<\/li>)(?:<br>){2,}/g, '$1<span class="sp"></span>')
+    .replace(/(<\/li>)<br>/g, "$1")
+    .replace(/(<\/(?:h[123]|pre)>)(?:<br>)+/g, "$1")
+    .replace(/(?:<br>)+(<(?:h[123]|pre|li)>)/g, "$1")
+    .replace(/(?:<br>){2,}/g, '<span class="sp"></span>');
 
   return html;
 }
@@ -275,9 +562,13 @@ function renderMessages() {
           How can I help you?
         </h1>
 
-        <p>
-          Ask anything and chat with Dhairya GPT.
-        </p>
+        <p>Ask anything, or start with one of these.</p>
+        <div class="chips">
+          <button class="chip" data-prompt="Explain how the internet works in simple terms"><b>Explain something</b><small>How the internet works, simply</small></button>
+          <button class="chip" data-prompt="Write a short, friendly email asking my teacher for an extension"><b>Write an email</b><small>Ask a teacher for an extension</small></button>
+          <button class="chip" data-prompt="Give me a 3-day beginner workout plan"><b>Make a plan</b><small>3-day beginner workout</small></button>
+          <button class="chip" data-prompt="Help me write a JavaScript function that reverses a string"><b>Write code</b><small>Reverse a string in JavaScript</small></button>
+        </div>
 
       </div>
 
@@ -315,9 +606,11 @@ function renderMessages() {
 
 
       bubble.innerHTML =
-        renderMarkdown(
-          message.content
-        );
+        message.role === "assistant" && !message.content && isGenerating
+          ? '<span class="typing"><i></i><i></i><i></i></span>'
+          : message.files
+            ? userFilesHtml(message)
+            : renderMarkdown(message.content);
 
 
       if (
@@ -348,9 +641,10 @@ function renderMessages() {
           "[data-copy]"
         ).onclick = () => {
 
-          navigator.clipboard.writeText(
-            message.content
-          );
+          navigator.clipboard.writeText(message.content);
+          const b = actions.querySelector("[data-copy]");
+          b.textContent = "Copied";
+          setTimeout(() => (b.textContent = "Copy"), 1200);
 
         };
 
@@ -368,6 +662,14 @@ function renderMessages() {
       }
 
 
+      if (message.role === "assistant") {
+        const av = document.createElement("img");
+        av.src = "/logo.svg";
+        av.className = "avatar";
+        av.alt = "";
+        row.appendChild(av);
+      }
+
       row.appendChild(bubble);
 
       container.appendChild(row);
@@ -382,6 +684,8 @@ function renderMessages() {
 
 function renderAll() {
 
+  document.body.classList.remove("sidebar-open");
+
   renderChatList();
 
   renderMessages();
@@ -394,17 +698,16 @@ function setGenerating(value) {
 
   isGenerating = value;
 
-  const button =
-    $("#sendBtn");
+  const button = $("#sendBtn");
 
-  if (!button) {
-    return;
+  if (button) {
+    button.innerHTML = value ? ICON_STOP : ICON_SEND;
+    button.title = value ? "Stop" : "Send";
   }
 
-  button.disabled = value;
-
-  button.textContent =
-    value ? "Stop" : "Send";
+  if (!value) {
+    renderMessages();
+  }
 }
 
 
@@ -421,12 +724,15 @@ async function sendMessage() {
     return;
   }
 
-  const content =
-    input.value.trim();
+  const text = input.value.trim();
 
-  if (!content) {
+  if (!text && !pendingFiles.length) {
     return;
   }
+
+  const files = pendingFiles.slice();
+
+  const content = buildContent(text, files);
 
 
   if (!currentChatId) {
@@ -444,7 +750,9 @@ async function sendMessage() {
 
   chat.messages.push({
     role: "user",
-    content
+    content,
+    text,
+    files: files.map(f => f.name)
   });
 
 
@@ -452,14 +760,20 @@ async function sendMessage() {
     chat.title === "New chat"
   ) {
 
-    chat.title =
-      content.length > 40
-        ? content.substring(0, 40) + "..."
-        : content;
+    chat.title = (() => {
+      const t = text || files[0]?.name || "New chat";
+      return t.length > 40 ? t.substring(0, 40) + "..." : t;
+    })();
   }
 
 
   input.value = "";
+
+  input.style.height = "auto";
+
+  pendingFiles = [];
+
+  renderTray();
 
   saveChats();
 
@@ -472,6 +786,8 @@ async function sendMessage() {
 async function generateResponse(chat) {
 
   setGenerating(true);
+
+  abortController = new AbortController();
 
 
   chat.messages.push({
@@ -494,7 +810,8 @@ async function generateResponse(chat) {
     let messages =
       chat.messages
         .slice(0, -1)
-        .slice(-CONFIG.MAX_MESSAGES);
+        .slice(-CONFIG.MAX_MESSAGES)
+        .map(m => ({ role: m.role, content: m.content }));
 
 
     if (settings.instructions) {
@@ -515,6 +832,8 @@ async function generateResponse(chat) {
         CONFIG.API_URL,
         {
           method: "POST",
+
+          signal: abortController.signal,
 
           headers: {
             "Content-Type":
@@ -547,6 +866,10 @@ async function generateResponse(chat) {
 
       } catch {}
 
+
+      if (response.status === 429 || response.status === 413) {
+        throw new Error(errorText);
+      }
 
       throw new Error(
         `Server error ${response.status}: ${errorText}`
@@ -662,9 +985,13 @@ async function generateResponse(chat) {
 
   } catch (error) {
 
-    assistantMessage.content =
-      "Error: " +
-      error.message;
+    if (error.name === "AbortError") {
+      if (!assistantMessage.content) {
+        assistantMessage.content = "(Stopped)";
+      }
+    } else {
+      assistantMessage.content = "Error: " + error.message;
+    }
 
     saveChats();
 
@@ -802,8 +1129,15 @@ function setupComposer() {
   }
 
 
-  send.onclick =
-    sendMessage;
+  send.innerHTML = ICON_SEND;
+
+  send.onclick = () => {
+    if (isGenerating) {
+      abortController?.abort();
+    } else {
+      sendMessage();
+    }
+  };
 
 
   input.addEventListener(
@@ -843,7 +1177,59 @@ function setupComposer() {
 
 /* BUTTONS */
 
+function toggleSidebar() {
+
+  if (window.innerWidth <= 760) {
+    document.body.classList.toggle("sidebar-open");
+  } else {
+    document.body.classList.toggle("sidebar-collapsed");
+  }
+}
+
+
 function setupButtons() {
+
+  const gameBtn = $("#gameBtn");
+  const gameClose = $("#gameClose");
+
+  if (gameBtn) gameBtn.onclick = toggleGame;
+  if (gameClose) gameClose.onclick = toggleGame;
+
+  document.querySelectorAll(".game-tabs button").forEach(b => {
+    b.onclick = () => {
+      gameMode = b.dataset.mode;
+      loadGameFrame();
+    };
+  });
+
+  const attach = $("#attachBtn");
+  const fileInput = $("#fileInput");
+
+  if (attach && fileInput) {
+
+    attach.onclick = () => fileInput.click();
+
+    fileInput.onchange = () => {
+      handleFiles(fileInput.files);
+      fileInput.value = "";
+    };
+  }
+
+
+  document
+    .querySelectorAll("[data-toggle-sidebar]")
+    .forEach(b => (b.onclick = toggleSidebar));
+
+  $("#messages").addEventListener("click", event => {
+
+    const chip = event.target.closest(".chip");
+
+    if (chip) {
+      $("#messageInput").value = chip.dataset.prompt;
+      sendMessage();
+    }
+  });
+
 
   const newChat =
     $("#newChatBtn");
@@ -943,6 +1329,42 @@ function setupModals() {
 }
 
 
+/* LAUNCH PARAMS (app shortcut + share target) */
+
+function handleLaunchParams() {
+
+  const q = new URLSearchParams(location.search);
+
+  if (!q.has("new") && !q.has("text") && !q.has("url") && !q.has("title")) {
+    return;
+  }
+
+  const current = getCurrentChat();
+
+  if (q.has("new") && current && current.messages.length) {
+    createChat();
+  }
+
+  const shared = [q.get("title"), q.get("text"), q.get("url")]
+    .filter(Boolean)
+    .join("\n");
+
+  const input = $("#messageInput");
+
+  if (shared && input) {
+
+    input.value = shared;
+    input.dispatchEvent(new Event("input"));
+  }
+
+  if (input) {
+    input.focus();
+  }
+
+  history.replaceState(null, "", location.pathname);
+}
+
+
 /* INITIALIZATION */
 
 function init() {
@@ -975,6 +1397,10 @@ function init() {
   setupButtons();
 
   setupModals();
+
+  handleLaunchParams();
+
+  setupAds();
 }
 
 

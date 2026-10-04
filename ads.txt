@@ -1,0 +1,2 @@
+# Replace the line below with your AdSense publisher ID, then remove the "#" at the start.
+# google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
