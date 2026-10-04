@@ -46,7 +46,10 @@ AI provider (streamed reply back to the browser)
 ```text
 dhairyagpt/
 ├── api/
-│   └── chat.js             # secure proxy, limits, instructions, fallback
+│   └── chat.js             # server function for Vercel (proxy, limits, instructions, fallback)
+├── functions/
+│   └── api/
+│       └── chat.js         # the same server function for Cloudflare Pages
 ├── .well-known/
 │   └── assetlinks.json     # lets the Android app open fullscreen
 ├── icons/                  # app icons (192 and 512 px PNG)
@@ -70,6 +73,19 @@ dhairyagpt/
 1. Push this repository to GitHub.
 2. Import it in [Vercel](https://vercel.com) and deploy. No build settings are needed.
 3. In **Settings → Environment Variables**, add the variables below, then **redeploy**.
+
+### Deploy on Cloudflare Pages instead (allows commercial use on the free plan)
+
+The repo works on both hosts: Vercel uses `api/chat.js`, Cloudflare uses `functions/api/chat.js`.
+
+1. In the Cloudflare dashboard, go to **Workers & Pages → Create → Pages → Connect to Git** and pick this repository.
+2. Framework preset: **None**. Build command: leave empty. Build output directory: `/` (or leave blank).
+3. After the first deploy, open **Settings → Variables and Secrets** and add the same variables listed below (store `API_KEY` and the other keys as **Secrets**), then redeploy.
+4. Optional but recommended: in **Security → WAF → Rate limiting rules**, add a rule for `/api/chat` to limit requests per IP. The built-in counters are best-effort only.
+
+Free plan limits: static files are unlimited; function calls (every chat message) share 100,000 requests a day with a 10 ms CPU limit each.
+
+If you change the website address, update it in `manifest.json`, `sitemap.xml`, `robots.txt`, `.well-known/assetlinks.json` and the Android app, and rebuild the APK.
 
 ### Environment variables
 

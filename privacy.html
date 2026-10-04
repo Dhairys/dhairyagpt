@@ -38,9 +38,9 @@ ul{padding-left:1.3em}
 
   <h2>1. What we collect</h2>
   <ul>
-    <li><b>Your messages and attached files.</b> When you send a message, its text (and the text of any file you attach) is passed through our server to a third-party AI provider to generate a reply. We do not store it on our servers.</li>
+    <li><b>Your messages and attached files.</b> When you send a message, its text (and the text of any file you attach) passes through Cloudfare's servers, where our code runs, to a third-party AI provider that generates a reply. We do not store it ourselves.</li>
     <li><b>Chat history, settings and consent.</b> Saved only in your own browser (local storage) so the app can show your past chats, your theme, your custom instructions and your acceptance of our Terms. Clearing your browser data, or using "Delete all chats", removes them.</li>
-    <li><b>IP address.</b> Used temporarily to count requests and apply fair-use limits and to prevent abuse. Counters expire automatically within a day.</li>
+    <li><b>IP address.</b> Our code runs on servers provided by cloudfare, which receive your IP address with every request. We turn it into a one-way scrambled code (a hash) and use that only to count requests for fair-use limits and abuse prevention. The counters are held temporarily in the memory of the server function and are discarded when it restarts or within about a day. We do not write your IP address to a database or file, and we do not pass it to the AI providers. Cloudfare, as our hosting provider, may keep its own standard technical logs.</li>
     <li>We do not ask you to create an account, and we do not collect your name, phone number or email address through the app.</li>
   </ul>
 
@@ -50,7 +50,7 @@ ul{padding-left:1.3em}
   <h2>3. Third parties</h2>
   <ul>
     <li><b>AI providers</b> (for example NVIDIA, Groq, OpenRouter and Hugging Face) process your messages to produce replies. Their own policies apply to that processing.</li>
-    <li><b>Vercel</b> hosts the website and may keep standard technical logs.</li>
+    <li><b>Cloudfare </b> hosts the website and runs our server code on our behalf. It may keep standard technical logs (such as request time and technical details of the request) for a short period under its own policies.</li>
     <li><b>YouTube</b> (Google). If you open Game mode, a YouTube video is loaded using the privacy-enhanced YouTube domain. YouTube may collect usage data and set cookies once the video plays. This only happens if you open Game mode.</li>
     <li><b>Google AdSense</b> may show ads. Google and its partners use cookies and similar technologies to serve ads based on your visits to this and other websites. Google's use of advertising cookies lets it and its partners serve ads to you based on your visits here and on other sites. You can manage or opt out of personalised ads at <a href="https://adssettings.google.com" target="_blank" rel="noopener" style="color:var(--accent)">adssettings.google.com</a> or <a href="https://www.aboutads.info" target="_blank" rel="noopener" style="color:var(--accent)">aboutads.info</a>. Learn more at <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener" style="color:var(--accent)">policies.google.com/technologies/ads</a>.</li>
   </ul>
@@ -68,7 +68,7 @@ ul{padding-left:1.3em}
   <p>Under the Digital Personal Data Protection Act, 2023 you may ask for access to, correction of, or erasure of personal data we hold about you, withdraw consent, and raise a grievance. Because we keep almost nothing about you, most of this is under your control in your browser. For anything else, contact us below.</p>
 
   <h2>7. Retention and security</h2>
-  <p>We keep no chat content on our servers. Rate-limit counters are short-lived. Our API keys are stored securely as server environment variables and are never sent to your browser. No online service is completely secure, so use the app with care.</p>
+  <p>We keep no chat content ourselves. Rate-limit counters hold only a hashed code, not your raw IP address, and are short-lived. Our API keys are stored securely as server environment variables and are never sent to your browser. No online service is completely secure, so use the app with care.</p>
 
   <h2>8. Changes</h2>
   <p>We may update this policy and will change the date above. Continued use means you accept the update.</p>

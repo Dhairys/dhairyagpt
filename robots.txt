@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://dhairyagpt.vercel.app/sitemap.xml
+Sitemap: https://dhairyagpt.pages.dev/sitemap.xml
