@@ -4,6 +4,7 @@ node_modules/
 # Environment variables / secrets
 .env
 .env.*
+.dev.vars
 !.env.example
 
 # Vercel
@@ -25,5 +26,3 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
-.vercel
-.env*

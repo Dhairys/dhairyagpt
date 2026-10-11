@@ -21,7 +21,7 @@ A free, personal AI chat web app with a clean ChatGPT-style interface. It stream
 - **Terms & Conditions screen** on the first visit, with About, Privacy and Terms pages written for Indian law
 - **"Losing Focus?" button**: a side panel with a Subway Surfers gameplay video (YouTube embed) and a built-in endless runner
 - **Installable PWA** with a "New chat" shortcut and Android Share support
-- **Fair-use limits** per user and for the whole site
+- **Daily message cap** for the whole site
 - **Automatic fallback** between up to three AI providers
 - **Google AdSense ready**: ads stay off until you add your IDs
 
@@ -32,7 +32,7 @@ Browser (index.html + app.js)
         │  POST /api/chat
         ▼
 Server function (Cloudflare Pages Function, or Vercel function)
-   • validates the request and applies limits (IP is hashed first)
+   • validates the request and applies the site-wide daily cap
    • adds the default instructions
    • tries provider 1 → 2 → 3 until one answers
         │  API keys stay on the server
@@ -106,8 +106,6 @@ Import the repo in Vercel, add the same variables under **Settings → Environme
 
 | Name | Default | Meaning |
 | --- | --- | --- |
-| `LIMIT_PER_MINUTE` | `6` | Messages per user per minute |
-| `LIMIT_PER_DAY` | `30` | Messages per user per day (resets at midnight IST) |
 | `LIMIT_GLOBAL_PER_DAY` | `800` | Messages for the whole site per day |
 
 **Other (optional)**
@@ -115,7 +113,6 @@ Import the repo in Vercel, add the same variables under **Settings → Environme
 | Name | Meaning |
 | --- | --- |
 | `SYSTEM_PROMPT` | Replaces the built-in default instructions |
-| `IP_SALT` | Any random text, makes the hashed IP codes private to you |
 
 ### Provider endpoints
 
@@ -202,7 +199,7 @@ Check `git status` first: no `.env`, `.dev.vars` or key should ever be listed. C
 | `401` / `403` | The key doesn't match the `API_URL`, or has extra spaces |
 | `400 … not supported` | The `MODEL` name is wrong for that provider |
 | `404` from the provider | `API_URL` is missing `/chat/completions` |
-| `Daily limit reached` | The user hit `LIMIT_PER_DAY` |
+| `reached its free daily limit` | The site-wide cap (`LIMIT_GLOBAL_PER_DAY`) was reached |
 | `free AI capacity is used up` | Every provider reached its daily cap |
 | Blank or cut-off replies | `MAX_TOKENS` is too low for a reasoning model. Raise it or set `REASONING_EFFORT=low` |
 | `no upstream branch` when pushing | Run `git push -u origin main` once |
@@ -213,7 +210,7 @@ Check `git status` first: no `.env`, `.dev.vars` or key should ever be listed. C
 - API keys live only in Cloudflare (or Vercel) secrets. Never put them in a file or commit them.
 - Chat history is stored in your own browser, not on a server.
 - Messages and attached files pass through the host's servers to the AI provider, so avoid sharing sensitive personal data.
-- Your IP address is turned into a one-way hash and held only briefly in memory to count requests. It is never passed to the AI providers. The host may keep its own technical logs.
+- We do not log or store visitor IP addresses. The host (Cloudflare) receives them to deliver the site and may keep its own technical logs.
 - The `.well-known/assetlinks.json` file is public by design. Never commit a `.keystore` file or its passwords.
 
 See [terms.html](terms.html) and [privacy.html](privacy.html) for the full policies.
